@@ -1,0 +1,24 @@
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*~
+
+# Claude Code local settings (per-machine permission grants, not shared)
+.claude/settings.local.json
+
+# Build / dependency dirs (not used today but safe to ignore in advance)
+node_modules/
+dist/
+.cache/
+
+# Local working notes — keep these out of the public repo
+tasks/
+
+# Log files
+*.log

@@ -16,6 +16,11 @@ desktop.ini
 node_modules/
 dist/
 .cache/
+coverage/
+
+# Runtime environment and uploads
+.env
+uploads/
 
 # Local working notes — keep these out of the public repo
 tasks/

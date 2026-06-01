@@ -1,0 +1,42 @@
+<% const footer = settings.footer || {}; %>
+<% const business = settings.business || {}; %>
+<footer class="footer">
+  <div class="container">
+    <div class="footer__grid">
+      <div class="footer__brand-block">
+        <a href="/index.html" class="footer__brand">
+          <span class="nav__brand-mark" aria-hidden="true"></span>
+          <%= business.name || 'CamerasNYC' %>
+        </a>
+        <% if (footer.about) { %>
+          <p class="footer__about"><%= footer.about %></p>
+        <% } %>
+        <p class="cred-badge"><strong>Licensed &amp; Insured</strong></p>
+      </div>
+
+      <% for (const column of footer.columns || []) { %>
+        <div class="footer__col">
+          <p class="footer__col-title"><%= column.title %></p>
+          <ul>
+            <% for (const link of column.links || []) { %>
+              <% const footerHref = safeUrl(link.href); %>
+              <li><a href="<%= footerHref %>" <% if (isExternalUrl(footerHref)) { %>target="_blank" rel="noopener"<% } %>><%= link.label %></a></li>
+            <% } %>
+            <% for (const item of column.items || []) { %>
+              <li><%= item %></li>
+            <% } %>
+          </ul>
+        </div>
+      <% } %>
+    </div>
+
+    <div class="footer__bottom">
+      <span>&copy; <span data-year><%= new Date().getFullYear() %></span> <%= footer.copyright || `${business.name || 'CamerasNYC'} LLC. All rights reserved.` %></span>
+      <div class="footer__credentials">
+        <% for (const credential of footer.credentials || []) { %>
+          <span><%= credential %></span>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</footer>

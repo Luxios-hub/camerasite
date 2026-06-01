@@ -1,0 +1,22 @@
+<% const nav = settings.navigation || {}; %>
+<% const business = settings.business || {}; %>
+<nav class="nav">
+  <div class="container nav__inner">
+    <a href="/index.html" class="nav__brand">
+      <span class="nav__brand-mark" aria-hidden="true"></span>
+      <%= nav.brand || business.name || 'CamerasNYC' %>
+    </a>
+    <ul class="nav__links">
+      <% for (const link of nav.links || []) { %>
+        <li>
+          <a href="<%= safeUrl(link.href) %>" class="nav__link <%= link.slug === page.slug ? 'is-active' : '' %>" <% if (link.slug === page.slug) { %>aria-current="page"<% } %>><%= link.label %></a>
+        </li>
+      <% } %>
+    </ul>
+    <a href="<%= safeUrl(business.phoneHref || settings.contact?.phoneHref || 'tel:+19298017756') %>" class="nav__phone">
+      <span><%= nav.phoneLabel || 'Call' %></span><%= business.phoneDisplay || settings.contact?.phoneDisplay || '929-801-7756' %>
+    </a>
+    <a href="<%= safeUrl(nav.ctaHref || 'contact.html') %>" class="btn btn--blue nav__cta"><%= nav.ctaLabel || 'Free Quote' %></a>
+    <button class="nav__toggle" aria-label="Toggle menu" aria-expanded="false"><span></span></button>
+  </div>
+</nav>

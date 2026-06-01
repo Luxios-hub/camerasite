@@ -1,0 +1,329 @@
+<% const pageHeader = blocksByKey.page_header || page; %>
+<header class="page-head">
+  <div class="container">
+    <% if (pageHeader.eyebrow || page.headerEyebrow) { %>
+      <p class="eyebrow page-head__eyebrow"><%= pageHeader.eyebrow || page.headerEyebrow %></p>
+    <% } %>
+    <h1 class="page-head__title text-balance"><%= pageHeader.title || page.headerTitle %></h1>
+    <% if (pageHeader.lede || page.headerLede) { %>
+      <p class="page-head__lede"><%= pageHeader.lede || page.headerLede %></p>
+    <% } %>
+  </div>
+</header>
+
+<% for (const block of enabledBlocks) { %>
+  <% if (block.blockKey === 'page_header' || block.blockType === 'cta_band') { continue; } %>
+
+  <% if (block.blockKey === 'industries') { %>
+    <section class="section">
+      <div class="container">
+        <div class="section-head">
+          <% if (block.eyebrow) { %><p class="eyebrow section-head__eyebrow"><%= block.eyebrow %></p><% } %>
+          <h2 class="section-head__title text-balance"><%= block.title %></h2>
+        </div>
+        <div class="industry-grid">
+          <% for (const item of items(block.blockKey)) { %>
+            <article class="industry-card">
+              <% if (item.subtitle) { %><div class="industry-card__icon"><%= item.subtitle %></div><% } %>
+              <h4 class="industry-card__title"><%= item.title %></h4>
+              <% if (item.body) { %><p class="industry-card__body"><%= item.body %></p><% } %>
+            </article>
+          <% } %>
+        </div>
+      </div>
+    </section>
+
+  <% } else if (block.blockKey === 'differentiators') { %>
+    <section class="section">
+      <div class="container">
+        <div class="section-head">
+          <% if (block.eyebrow) { %><p class="eyebrow section-head__eyebrow"><%= block.eyebrow %></p><% } %>
+          <h2 class="section-head__title text-balance"><%= block.title %></h2>
+        </div>
+        <div class="diff-grid">
+          <% for (const item of items(block.blockKey)) { %>
+            <article class="diff-card">
+              <% if (item.subtitle) { %><p class="diff-card__num"><%= item.subtitle %></p><% } %>
+              <h3 class="diff-card__title"><%= item.title %></h3>
+              <% if (item.body) { %><p class="diff-card__body"><%= item.body %></p><% } %>
+            </article>
+          <% } %>
+        </div>
+      </div>
+    </section>
+
+  <% } else if (block.blockType === 'feature_grid') { %>
+    <section class="section <%= block.blockKey === 'capabilities' ? 'section--paper' : '' %>">
+      <div class="container">
+        <div class="section-head">
+          <% if (block.eyebrow) { %><p class="eyebrow section-head__eyebrow"><%= block.eyebrow %></p><% } %>
+          <h2 class="section-head__title text-balance"><%= block.title %></h2>
+          <% if (block.lede) { %><p class="section-head__lede"><%= block.lede %></p><% } %>
+        </div>
+        <div class="feature-grid">
+          <% for (const item of items(block.blockKey)) { %>
+            <article class="feature-tile">
+              <% if (item.subtitle) { %><p class="feature-tile__num"><%= item.subtitle %></p><% } %>
+              <h4 class="feature-tile__title"><%= item.title %></h4>
+              <% if (item.body) { %><p class="feature-tile__body"><%= item.body %></p><% } %>
+            </article>
+          <% } %>
+        </div>
+      </div>
+    </section>
+
+  <% } else if (block.blockKey === 'service_tiers') { %>
+    <% const tierItems = items(block.blockKey); %>
+    <% const features = (block.settings && block.settings.comparisonFeatures) || []; %>
+    <section class="section section--paper" id="maintenance">
+      <div class="container">
+        <div class="section-head section-head--center">
+          <% if (block.eyebrow) { %><p class="eyebrow section-head__eyebrow"><%= block.eyebrow %></p><% } %>
+          <h2 class="section-head__title text-balance"><%= block.title %></h2>
+          <% if (block.lede) { %><p class="section-head__lede"><%= block.lede %></p><% } %>
+        </div>
+        <div style="background: var(--cream); border-radius: var(--radius-lg); padding: clamp(1rem, 3vw, 2rem); overflow-x: auto;">
+          <table class="tier-table">
+            <thead>
+              <tr>
+                <th>What's included</th>
+                <% for (const tier of tierItems) { %>
+                  <th class="<%= tier.isFeatured ? 'tier-table__featured' : '' %>"><%= tier.title %></th>
+                <% } %>
+              </tr>
+            </thead>
+            <tbody>
+              <% for (const feature of features) { %>
+                <tr>
+                  <td class="tier-row__feature"><%= feature %></td>
+                  <% for (const tier of tierItems) { %>
+                    <% const hasFeature = tier.metadata && Array.isArray(tier.metadata.included) && tier.metadata.included.includes(feature); %>
+                    <td class="<%= tier.isFeatured ? 'tier-table__featured' : '' %> <%= hasFeature ? '' : 'is-empty' %>"><%- hasFeature ? '&#10003;' : '&mdash;' %></td>
+                  <% } %>
+                </tr>
+              <% } %>
+              <tr>
+                <td class="tier-row__feature"><strong>Cost structure</strong></td>
+                <% for (const tier of tierItems) { %>
+                  <td class="<%= tier.isFeatured ? 'tier-table__featured' : '' %>"><%= tier.price %></td>
+                <% } %>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  <% } else if (block.blockType === 'pricing_packages') { %>
+    <section class="section section--paper">
+      <div class="container">
+        <div class="section-head section-head--center">
+          <% if (block.eyebrow) { %><p class="eyebrow section-head__eyebrow"><%= block.eyebrow %></p><% } %>
+          <h2 class="section-head__title text-balance"><%= block.title %></h2>
+          <% if (block.lede) { %><p class="section-head__lede"><%= block.lede %></p><% } %>
+        </div>
+        <div class="packages">
+          <% for (const item of items(block.blockKey)) { %>
+            <article class="pkg-card <%= item.isFeatured ? 'pkg-card--featured' : '' %>">
+              <p class="pkg-card__name"><%= item.title %></p>
+              <% if (item.price) { %>
+                <p class="pkg-card__price"><%= item.price %><% if (item.metadata && item.metadata.priceSuffix) { %><small><%= item.metadata.priceSuffix %></small><% } %></p>
+              <% } %>
+              <% if (item.body) { %><p class="pkg-card__desc"><%= item.body %></p><% } %>
+              <% if (item.metadata && item.metadata.includes) { %>
+                <ul class="pkg-card__includes">
+                  <% for (const include of item.metadata.includes) { %><li><%= include %></li><% } %>
+                </ul>
+              <% } %>
+              <% if (item.linkLabel) { %>
+                <a href="<%= safeUrl(item.linkUrl) %>" class="btn <%= item.isFeatured ? 'btn--blue' : 'btn--ghost' %> pkg-card__cta"><%= item.linkLabel %></a>
+              <% } %>
+            </article>
+          <% } %>
+        </div>
+      </div>
+    </section>
+
+  <% } else if (block.blockType === 'process_steps') { %>
+    <section class="section">
+      <div class="container">
+        <div class="section-head">
+          <% if (block.eyebrow) { %><p class="eyebrow section-head__eyebrow"><%= block.eyebrow %></p><% } %>
+          <h2 class="section-head__title text-balance"><%= block.title %></h2>
+        </div>
+        <ol class="process" role="list">
+          <% for (const item of items(block.blockKey)) { %>
+            <li class="process__step">
+              <% if (item.subtitle) { %><div class="process__num"><%= item.subtitle %></div><% } %>
+              <p class="process__title"><%= item.title %></p>
+              <% if (item.body) { %><p class="process__body"><%= item.body %></p><% } %>
+            </li>
+          <% } %>
+        </ol>
+      </div>
+    </section>
+
+  <% } else if (block.blockType === 'faq') { %>
+    <section class="section">
+      <div class="container container--narrow">
+        <div class="section-head">
+          <% if (block.eyebrow) { %><p class="eyebrow section-head__eyebrow"><%= block.eyebrow %></p><% } %>
+          <h2 class="section-head__title text-balance"><%= block.title %></h2>
+        </div>
+        <div class="faq">
+          <% for (const item of items(block.blockKey)) { %>
+            <details class="faq__item">
+              <summary class="faq__q"><%= item.title %></summary>
+              <% if (item.body) { %><div class="faq__a"><%= item.body %></div><% } %>
+            </details>
+          <% } %>
+        </div>
+      </div>
+    </section>
+
+  <% } else if (block.blockType === 'case_studies') { %>
+    <section class="section">
+      <div class="container">
+        <div class="section-head section-head--split">
+          <div>
+            <% if (block.eyebrow) { %><p class="eyebrow section-head__eyebrow"><%= block.eyebrow %></p><% } %>
+            <h2 class="section-head__title text-balance"><%= block.title %></h2>
+          </div>
+          <% if (block.settings && block.settings.cta) { %><a href="<%= safeUrl(block.settings.cta.href) %>" class="btn btn--ghost"><%= block.settings.cta.label %></a><% } %>
+        </div>
+        <div class="case-grid">
+          <% for (const item of items(block.blockKey)) { %>
+            <% const itemMeta = item.metadata || {}; %>
+            <article class="case-card">
+              <% const caseMedia = safeUrl(mediaUrl(item), null); %>
+              <% if (caseMedia) { %>
+                <img class="case-card__media" src="<%= caseMedia %>" alt="<%= item.title %>" />
+              <% } else { %>
+                <div class="case-card__media photo-ph <%= itemMeta.placeholderClass || 'photo-ph--storefront' %>" data-img-placeholder="<%= itemMeta.imagePlaceholder || itemMeta.imageSlot || item.itemKey %>">
+                  <% if (itemMeta.tag) { %><span class="photo-ph__tag"><%= itemMeta.tag %></span><% } %>
+                </div>
+              <% } %>
+              <div class="case-card__body">
+                <% if (item.subtitle) { %><p class="case-card__kpi"><%= item.subtitle %></p><% } %>
+                <p class="case-card__title"><%= item.title %></p>
+                <% if (item.body) { %><p><%= item.body %></p><% } %>
+              </div>
+            </article>
+          <% } %>
+        </div>
+      </div>
+    </section>
+
+  <% } else if (block.blockKey === 'integrations') { %>
+    <section class="section">
+      <div class="container">
+        <div class="section-head">
+          <% if (block.eyebrow) { %><p class="eyebrow section-head__eyebrow"><%= block.eyebrow %></p><% } %>
+          <h2 class="section-head__title text-balance"><%= block.title %></h2>
+          <% if (block.lede) { %><p class="section-head__lede"><%= block.lede %></p><% } %>
+        </div>
+        <% if (block.settings && block.settings.logos) { %>
+          <div class="logos-row">
+            <% for (const logo of block.settings.logos) { %><span class="logo-chip"><span class="logo-chip__dot"></span><%= logo %></span><% } %>
+          </div>
+        <% } %>
+      </div>
+    </section>
+
+  <% } else if (block.blockKey === 'founder') { %>
+    <% const founderSettings = block.settings || {}; %>
+    <section class="section section--tight section--cream-warm">
+      <div class="container">
+        <div class="contact-layout">
+          <% const founderMedia = safeUrl(mediaUrl(block), null); %>
+          <% if (founderMedia) { %>
+            <img class="photo-ph" src="<%= founderMedia %>" alt="<%= block.title %>" style="aspect-ratio: 4/5; border-radius: var(--radius-lg); box-shadow: var(--shadow-card);" />
+          <% } else { %>
+            <div class="photo-ph <%= founderSettings.placeholderClass || 'photo-ph--interior' %>" data-img-placeholder="<%= founderSettings.imagePlaceholder || founderSettings.imageSlot || 'founder-photo' %>" style="aspect-ratio: 4/5; border-radius: var(--radius-lg); box-shadow: var(--shadow-card);">
+              <% if (founderSettings.imageTag) { %><span class="photo-ph__tag"><%= founderSettings.imageTag %></span><% } %>
+              <% if (founderSettings.imageCaption) { %>
+                <span class="photo-ph__caption">
+                  <% for (const caption of founderSettings.imageCaption) { %><span><%= caption %></span><% } %>
+                </span>
+              <% } %>
+            </div>
+          <% } %>
+          <div>
+            <% if (block.eyebrow) { %><p class="eyebrow section-head__eyebrow"><%= block.eyebrow %></p><% } %>
+            <h2 class="section-head__title text-balance" style="margin-bottom: var(--space-3);"><%= block.title %></h2>
+            <% const founderParagraphs = String(block.body || '').split(/\n\n+/).filter(Boolean); %>
+            <% for (let index = 0; index < founderParagraphs.length; index += 1) { %>
+              <% if (index === 0) { %>
+                <p class="mono" style="font-size: var(--fs-eyebrow); letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: var(--space-5);"><%= founderParagraphs[index] %></p>
+              <% } else { %>
+                <p style="color: var(--ink-soft); margin-bottom: var(--space-4); max-width: 52ch;"><%= founderParagraphs[index] %></p>
+              <% } %>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  <% } else if (block.blockKey === 'emergency') { %>
+    <section class="section section--cream-warm">
+      <div class="container">
+        <div class="trust-block">
+          <div>
+            <% if (block.eyebrow) { %><p class="eyebrow section-head__eyebrow"><%= block.eyebrow %></p><% } %>
+            <h2 class="section-head__title text-balance"><%= block.title %></h2>
+            <% if (block.body) { %><p class="section-head__lede" style="margin-bottom: var(--space-5);"><%= block.body %></p><% } %>
+            <% if (block.settings && block.settings.primaryCta) { %><a href="<%= safeUrl(block.settings.primaryCta.href) %>" class="btn btn--primary btn--icon"><%= block.settings.primaryCta.label %></a><% } %>
+          </div>
+          <ul class="trust-points">
+            <% for (const item of items(block.blockKey)) { %>
+              <li>
+                <% if (item.subtitle) { %><span class="trust-points__num"><%= item.subtitle %></span><% } %>
+                <div>
+                  <p class="trust-points__title"><%= item.title %></p>
+                  <% if (item.body) { %><p class="trust-points__body"><%= item.body %></p><% } %>
+                </div>
+              </li>
+            <% } %>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+  <% } else if (block.blockKey === 'credentials') { %>
+    <section class="section section--paper">
+      <div class="container">
+        <div class="section-head">
+          <% if (block.eyebrow) { %><p class="eyebrow section-head__eyebrow"><%= block.eyebrow %></p><% } %>
+          <h2 class="section-head__title text-balance"><%= block.title %></h2>
+        </div>
+        <div class="credentials-row" style="gap: var(--space-3);">
+          <% for (const item of items(block.blockKey)) { %>
+            <span class="cred-badge"><strong><%= item.title %></strong> <%= item.body || '' %></span>
+          <% } %>
+        </div>
+        <% if (block.body) { %><p style="margin-top: var(--space-6); color: var(--ink-soft); font-size: var(--fs-sm); max-width: 70ch;"><%= block.body %></p><% } %>
+      </div>
+    </section>
+
+  <% } else if (block.blockType === 'rich_text') { %>
+    <section class="section <%= block.blockKey === 'compliance' ? 'section--tight section--cream-warm' : '' %>">
+      <div class="container <%= block.blockKey === 'origin_story' || block.blockKey === 'compliance' ? 'container--narrow' : '' %>">
+        <div class="section-head">
+          <% if (block.eyebrow) { %><p class="eyebrow section-head__eyebrow"><%= block.eyebrow %></p><% } %>
+          <h2 class="section-head__title text-balance"><%= block.title %></h2>
+        </div>
+        <% const paragraphs = String(block.body || '').split(/\n\n+/).filter(Boolean); %>
+        <% for (const paragraph of paragraphs) { %>
+          <p style="font-size: var(--fs-lg); color: var(--ink-soft); margin-bottom: var(--space-5); max-width: 70ch;"><%= paragraph %></p>
+        <% } %>
+        <% if (block.settings && block.settings.credentials) { %>
+          <div class="credentials-row" style="margin-top: var(--space-6);">
+            <% for (const credential of block.settings.credentials) { %><span class="cred-badge"><%= credential %></span><% } %>
+          </div>
+        <% } %>
+      </div>
+    </section>
+  <% } %>
+<% } %>
+
+<%- include('../partials/public/ctaBand', { block: blocksByKey.quote_cta }) %>

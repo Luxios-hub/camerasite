@@ -1,0 +1,27 @@
+<% if (block) { %>
+  <% function buttonClass(style) {
+    if (style === 'whatsapp') return 'btn btn--whatsapp';
+    if (style === 'ghost-light') return 'btn btn--ghost-light';
+    if (style === 'ghost') return 'btn btn--ghost';
+    if (style === 'blue') return 'btn btn--blue';
+    return 'btn btn--primary btn--icon';
+  } %>
+  <section class="cta-band">
+    <div class="container cta-band__inner">
+      <div>
+        <% if (block.title) { %>
+          <h2 class="cta-band__title text-balance"><%= block.title %></h2>
+        <% } %>
+        <% if (block.lede) { %>
+          <p class="cta-band__lede"><%= block.lede %></p>
+        <% } %>
+      </div>
+      <div class="cta-band__actions">
+        <% for (const action of (block.settings && block.settings.actions) || []) { %>
+          <% const actionHref = safeUrl(action.href); %>
+          <a href="<%= actionHref %>" class="<%= buttonClass(action.style) %>" <% if (isExternalUrl(actionHref)) { %>target="_blank" rel="noopener"<% } %>><%= action.label %></a>
+        <% } %>
+      </div>
+    </div>
+  </section>
+<% } %>

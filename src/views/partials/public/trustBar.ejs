@@ -1,0 +1,15 @@
+<% const trustItems = (settings.trust_bar && settings.trust_bar.items) || []; %>
+<% if (trustItems.length > 0) { %>
+<div class="trust-bar">
+  <div class="container trust-bar__inner">
+    <% trustItems.forEach((item, index) => { %>
+      <% if (index > 0) { %>
+        <span class="trust-bar__sep">/</span>
+      <% } %>
+      <span class="<%= index === 0 ? 'trust-bar__item' : '' %>">
+        <% if (index === 0) { %><span class="trust-bar__dot"></span><% } %><%= item %>
+      </span>
+    <% }) %>
+  </div>
+</div>
+<% } %>

@@ -1,0 +1,24 @@
+<% const seoDefaults = settings.seo_defaults || {}; %>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title><%= page.title %></title>
+<meta name="description" content="<%= page.metaDescription %>" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=Schibsted+Grotesk:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/css/styles.css" />
+<meta name="theme-color" content="<%= seoDefaults.themeColor || '#faf6ef' %>" />
+
+<meta property="og:type" content="website" />
+<meta property="og:url" content="<%= canonicalUrl %>" />
+<meta property="og:title" content="<%= page.ogTitle || page.title %>" />
+<meta property="og:description" content="<%= page.ogDescription || page.metaDescription %>" />
+<meta property="og:image" content="<%= ogImageUrl %>" />
+<meta name="twitter:card" content="<%= seoDefaults.twitterCard || 'summary_large_image' %>" />
+<link rel="canonical" href="<%= canonicalUrl %>" />
+
+<% for (const schema of jsonLdSchemas) { %>
+<script type="application/ld+json">
+<%- JSON.stringify(schema, null, 2).replace(/<\/script/gi, '<\\/script') %>
+</script>
+<% } %>

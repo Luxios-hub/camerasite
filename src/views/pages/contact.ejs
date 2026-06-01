@@ -1,0 +1,101 @@
+<% const pageHeader = blocksByKey.page_header || page; %>
+<header class="page-head">
+  <div class="container">
+    <% if (pageHeader.eyebrow || page.headerEyebrow) { %>
+      <p class="eyebrow page-head__eyebrow"><%= pageHeader.eyebrow || page.headerEyebrow %></p>
+    <% } %>
+    <h1 class="page-head__title text-balance"><%= pageHeader.title || page.headerTitle %></h1>
+    <% if (pageHeader.lede || page.headerLede) { %>
+      <p class="page-head__lede"><%= pageHeader.lede || page.headerLede %></p>
+    <% } %>
+  </div>
+</header>
+
+<% const contactInfo = blocksByKey.contact_info; %>
+<% const quoteForm = blocksByKey.quote_form; %>
+<% const formSettings = (quoteForm && quoteForm.settings) || {}; %>
+
+<section class="section">
+  <div class="container">
+    <div class="contact-layout">
+      <% if (contactInfo) { %>
+        <aside class="contact-info">
+          <% for (const item of items('contact_info')) { %>
+            <div class="contact-info__group">
+              <h4><%= item.title %></h4>
+              <% if (item.linkUrl && item.linkLabel && item.itemKey === 'whatsapp') { %>
+                <% const contactHref = safeUrl(item.linkUrl); %>
+                <a href="<%= contactHref %>" <% if (isExternalUrl(contactHref)) { %>target="_blank" rel="noopener"<% } %> class="btn btn--whatsapp" style="margin-top: var(--space-2);"><%= item.linkLabel %></a>
+              <% } else if (item.linkUrl && item.linkLabel) { %>
+                <a href="<%= safeUrl(item.linkUrl) %>" class="contact-info__phone"><%= item.linkLabel %></a>
+              <% } %>
+              <% if (item.body) { %>
+                <p style="margin-top: var(--space-2); font-size: var(--fs-sm);">
+                  <% const lines = String(item.body).split(/\n/); %>
+                  <% for (let index = 0; index < lines.length; index += 1) { %>
+                    <% if (index > 0) { %><br /><% } %><%= lines[index] %>
+                  <% } %>
+                </p>
+              <% } %>
+            </div>
+          <% } %>
+        </aside>
+      <% } %>
+
+      <% if (quoteForm) { %>
+        <div class="form-card">
+          <% if (quoteForm.eyebrow) { %><p class="eyebrow section-head__eyebrow"><%= quoteForm.eyebrow %></p><% } %>
+          <h2 class="section-head__title" style="font-size: var(--fs-xl); margin-bottom: var(--space-5);"><%= quoteForm.title %></h2>
+
+          <form action="<%= safeUrl(formSettings.action || settings.contact?.formEndpoint || '#') %>" method="<%= safeFormMethod(formSettings.method || 'POST') %>" class="form-grid" name="<%= safeFormName(formSettings.formName || 'quote') %>">
+            <% if (formSettings.honeypotField) { %>
+              <input type="text" name="<%= safeFormName(formSettings.honeypotField, 'bot-field') %>" tabindex="-1" autocomplete="off" style="position:absolute; left:-9999px;" aria-hidden="true" />
+            <% } %>
+
+            <% const fields = formSettings.fields || []; %>
+            <% for (let fieldIndex = 0; fieldIndex < fields.length; fieldIndex += 1) { %>
+              <% const field = fields[fieldIndex]; %>
+              <% const fieldAttrs = safeFormField(field, fieldIndex); %>
+              <% if (fieldAttrs.type === 'select') { %>
+                <% const options = fieldAttrs.sourceName === 'type' ? (formSettings.propertyTypes || []) : (formSettings.cameraCounts || []); %>
+                <div class="form-field">
+                  <label for="<%= fieldAttrs.id %>"><%= field.label %></label>
+                  <select id="<%= fieldAttrs.id %>" name="<%= fieldAttrs.name %>" <% if (fieldAttrs.required) { %>required<% } %>>
+                    <option value=""><%= fieldAttrs.sourceName === 'type' ? 'Select...' : (options[0] || 'Not sure yet') %></option>
+                    <% for (const option of (fieldAttrs.sourceName === 'cameras' ? options.slice(1) : options)) { %>
+                      <option><%= option %></option>
+                    <% } %>
+                  </select>
+                </div>
+              <% } else if (fieldAttrs.type === 'textarea') { %>
+                <div class="form-field form-field--full">
+                  <label for="<%= fieldAttrs.id %>"><%= field.label %></label>
+                  <textarea id="<%= fieldAttrs.id %>" name="<%= fieldAttrs.name %>" placeholder="<%= formSettings.placeholder || '' %>"></textarea>
+                </div>
+              <% } else { %>
+                <div class="form-field">
+                  <label for="<%= fieldAttrs.id %>"><%= field.label %></label>
+                  <input
+                    type="<%= fieldAttrs.type %>"
+                    id="<%= fieldAttrs.id %>"
+                    name="<%= fieldAttrs.name %>"
+                    <% if (fieldAttrs.required) { %>required<% } %>
+                    <% if (fieldAttrs.autocomplete) { %>autocomplete="<%= fieldAttrs.autocomplete %>"<% } %>
+                    <% if (fieldAttrs.pattern) { %>pattern="<%= fieldAttrs.pattern %>"<% } %>
+                    <% if (fieldAttrs.maxlength) { %>maxlength="<%= fieldAttrs.maxlength %>"<% } %>
+                    <% if (fieldAttrs.inputmode) { %>inputmode="<%= fieldAttrs.inputmode %>"<% } %>
+                  />
+                </div>
+              <% } %>
+            <% } %>
+
+            <div class="form-actions form-field--full">
+              <button type="submit" class="btn btn--blue btn--icon">Request quote</button>
+              <% if (quoteForm.body) { %><p class="form-actions__note"><%= quoteForm.body %></p><% } %>
+            </div>
+          </form>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</section>

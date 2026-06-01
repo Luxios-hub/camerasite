@@ -1,0 +1,224 @@
+<% const hero = blocksByKey.hero; %>
+<% if (hero) { %>
+  <% const heroSettings = hero.settings || {}; %>
+  <header class="hero">
+    <div class="container hero__inner">
+      <div class="hero__copy">
+        <% if (hero.eyebrow) { %><p class="eyebrow hero__eyebrow"><%= hero.eyebrow %></p><% } %>
+        <h1 class="hero__title text-balance"><%= hero.title %></h1>
+        <% if (hero.lede) { %><p class="hero__lede"><%= hero.lede %></p><% } %>
+        <div class="hero__ctas">
+          <% if (heroSettings.primaryCta) { %>
+            <a href="<%= safeUrl(heroSettings.primaryCta.href) %>" class="btn btn--primary btn--icon"><%= heroSettings.primaryCta.label %></a>
+          <% } %>
+          <% if (heroSettings.secondaryCta) { %>
+            <% const secondaryHref = safeUrl(heroSettings.secondaryCta.href); %>
+            <a href="<%= secondaryHref %>" <% if (isExternalUrl(secondaryHref)) { %>target="_blank" rel="noopener"<% } %> class="btn btn--whatsapp"><%= heroSettings.secondaryCta.label %></a>
+          <% } %>
+        </div>
+        <div class="hero__stats">
+          <% for (const stat of items('hero')) { %>
+            <div><strong><%= (stat.metadata && stat.metadata.value) || stat.title %></strong> <%= (stat.metadata && stat.metadata.label) || stat.body || '' %></div>
+          <% } %>
+        </div>
+      </div>
+      <% const heroMedia = safeUrl(mediaUrl(hero), null); %>
+      <% if (heroMedia) { %>
+        <img class="hero__visual" src="<%= heroMedia %>" alt="<%= hero.title %>" />
+      <% } else { %>
+        <div class="hero__visual photo-ph <%= heroSettings.placeholderClass || 'photo-ph--dusk' %>" data-img-placeholder="<%= heroSettings.imagePlaceholder || heroSettings.imageSlot || 'hero' %>">
+          <% if (heroSettings.imageCaption) { %>
+            <span class="photo-ph__caption">
+              <% for (const caption of heroSettings.imageCaption) { %><span><%= caption %></span><% } %>
+            </span>
+          <% } %>
+        </div>
+      <% } %>
+    </div>
+  </header>
+<% } %>
+
+<% const systems = blocksByKey.systems; %>
+<% if (systems) { %>
+  <section class="section section--paper" id="systems">
+    <div class="container">
+      <div class="section-head section-head--split">
+        <div>
+          <% if (systems.eyebrow) { %><p class="eyebrow section-head__eyebrow"><%= systems.eyebrow %></p><% } %>
+          <h2 class="section-head__title text-balance"><%= systems.title %></h2>
+        </div>
+        <% if (systems.lede) { %><p class="section-head__lede"><%= systems.lede %></p><% } %>
+      </div>
+
+      <div class="two-track">
+        <% for (const item of items('systems')) { %>
+          <% const itemMeta = item.metadata || {}; %>
+          <a class="track-card" href="<%= safeUrl(item.linkUrl) %>">
+            <% const itemMedia = safeUrl(mediaUrl(item), null); %>
+            <% if (itemMedia) { %>
+              <img class="track-card__media" src="<%= itemMedia %>" alt="<%= item.title %>" />
+            <% } else { %>
+              <div class="track-card__media photo-ph <%= itemMeta.placeholderClass || 'photo-ph--porch' %>" data-img-placeholder="<%= itemMeta.imagePlaceholder || itemMeta.imageSlot || item.itemKey %>">
+                <% if (itemMeta.audience) { %><span class="photo-ph__tag"><%= itemMeta.audience %></span><% } %>
+              </div>
+            <% } %>
+            <h3 class="track-card__title"><%= item.title %></h3>
+            <% if (itemMeta.bullets) { %>
+              <ul class="track-card__bullets">
+                <% for (const bullet of itemMeta.bullets) { %><li><%= bullet %></li><% } %>
+              </ul>
+            <% } else if (item.body) { %>
+              <p><%= item.body %></p>
+            <% } %>
+            <% if (item.linkLabel) { %><span class="track-card__cta"><%= item.linkLabel %></span><% } %>
+          </a>
+        <% } %>
+      </div>
+    </div>
+  </section>
+<% } %>
+
+<% const included = blocksByKey.included; %>
+<% if (included) { %>
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <% if (included.eyebrow) { %><p class="eyebrow section-head__eyebrow"><%= included.eyebrow %></p><% } %>
+        <h2 class="section-head__title text-balance"><%= included.title %></h2>
+      </div>
+      <div class="feature-grid">
+        <% for (const item of items('included')) { %>
+          <article class="feature-tile">
+            <% if (item.subtitle) { %><p class="feature-tile__num"><%= item.subtitle %></p><% } %>
+            <h4 class="feature-tile__title"><%= item.title %></h4>
+            <% if (item.body) { %><p class="feature-tile__body"><%= item.body %></p><% } %>
+          </article>
+        <% } %>
+      </div>
+    </div>
+  </section>
+<% } %>
+
+<% const whyLocal = blocksByKey.why_local; %>
+<% if (whyLocal) { %>
+  <% const whySettings = whyLocal.settings || {}; %>
+  <section class="section section--paper">
+    <div class="container">
+      <div class="two-track">
+        <% const whyMedia = safeUrl(mediaUrl(whyLocal), null); %>
+        <% if (whyMedia) { %>
+          <img class="photo-ph" src="<%= whyMedia %>" alt="<%= whyLocal.title %>" style="aspect-ratio: 4/5; border-radius: var(--radius-lg);" />
+        <% } else { %>
+          <div class="photo-ph <%= whySettings.placeholderClass || 'photo-ph--interior' %>" data-img-placeholder="<%= whySettings.imagePlaceholder || whySettings.imageSlot || 'local-installer-photo' %>" style="aspect-ratio: 4/5; border-radius: var(--radius-lg);">
+            <% if (whySettings.imageTag) { %><span class="photo-ph__tag"><%= whySettings.imageTag %></span><% } %>
+            <% if (whySettings.imageCaption) { %>
+              <span class="photo-ph__caption">
+                <% for (const caption of whySettings.imageCaption) { %><span><%= caption %></span><% } %>
+              </span>
+            <% } %>
+          </div>
+        <% } %>
+        <div>
+          <% if (whyLocal.eyebrow) { %><p class="eyebrow section-head__eyebrow"><%= whyLocal.eyebrow %></p><% } %>
+          <h2 class="section-head__title text-balance" style="font-size: clamp(2rem, 1.5rem + 2.2vw, 3rem); margin-bottom: var(--space-5);"><%= whyLocal.title %></h2>
+          <% if (whyLocal.body) { %><p class="section-head__lede" style="margin-bottom: var(--space-6);"><%= whyLocal.body %></p><% } %>
+          <ul class="trust-points" style="border-top: 1px solid var(--hairline);">
+            <% for (const item of items('why_local')) { %>
+              <li>
+                <% if (item.subtitle) { %><span class="trust-points__num"><%= item.subtitle %></span><% } %>
+                <div>
+                  <p class="trust-points__title"><%= item.title %></p>
+                  <% if (item.body) { %><p class="trust-points__body"><%= item.body %></p><% } %>
+                </div>
+              </li>
+            <% } %>
+          </ul>
+          <% if (whySettings.credentials) { %>
+            <div class="credentials-row">
+              <% for (const credential of whySettings.credentials) { %><span class="cred-badge"><%= credential %></span><% } %>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </section>
+<% } %>
+
+<% const serviceArea = blocksByKey.service_area; %>
+<% if (serviceArea) { %>
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <% if (serviceArea.eyebrow) { %><p class="eyebrow section-head__eyebrow"><%= serviceArea.eyebrow %></p><% } %>
+        <h2 class="section-head__title text-balance"><%= serviceArea.title %></h2>
+        <% if (serviceArea.lede) { %><p class="section-head__lede"><%= serviceArea.lede %></p><% } %>
+      </div>
+
+      <div class="area">
+        <div class="area__map" role="img" aria-label="<%= (serviceArea.settings && serviceArea.settings.mapLabel) || 'Service area map' %>">
+          <svg class="area__map-svg" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+            <path d="M40,80 Q70,60 100,80 L130,100 L150,140 L150,200 L120,240 L80,250 L40,210 Z" fill="rgba(31, 111, 235, 0.15)" stroke="rgba(31, 111, 235, 0.55)" stroke-width="1.2" />
+            <path d="M165,90 L175,80 L185,95 L190,160 L182,200 L172,205 L165,180 Z" fill="rgba(31, 111, 235, 0.35)" stroke="rgba(31, 111, 235, 0.8)" stroke-width="1.2" />
+            <path d="M195,90 L260,80 L300,110 L310,160 L290,200 L240,220 L195,215 L185,170 Z" fill="rgba(31, 111, 235, 0.25)" stroke="rgba(31, 111, 235, 0.65)" stroke-width="1.2" />
+            <path d="M260,140 L380,135 L390,155 L375,175 L300,180 L270,170 Z" fill="rgba(31, 111, 235, 0.18)" stroke="rgba(31, 111, 235, 0.55)" stroke-width="1.2" />
+            <circle cx="225" cy="150" r="5" fill="var(--blue)" />
+            <circle cx="225" cy="150" r="14" fill="none" stroke="var(--blue)" stroke-width="1" opacity="0.5" />
+          </svg>
+          <span class="area__map-label" style="top: 16px; left: 20px;">NJ</span>
+          <span class="area__map-label" style="top: 16px; left: 48%;">NYC</span>
+          <span class="area__map-label" style="top: 16px; right: 16px;">LONG ISLAND</span>
+        </div>
+
+        <div class="area__regions">
+          <% for (const item of items('service_area')) { %>
+            <div class="area__region">
+              <h4><%= item.title %></h4>
+              <% if (item.metadata && item.metadata.areas) { %>
+                <ul>
+                  <% for (const area of item.metadata.areas) { %><li><%= area %></li><% } %>
+                </ul>
+              <% } %>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </section>
+<% } %>
+
+<% const recentWork = blocksByKey.recent_work; %>
+<% if (recentWork) { %>
+  <section class="section section--paper">
+    <div class="container">
+      <div class="section-head section-head--split">
+        <div>
+          <% if (recentWork.eyebrow) { %><p class="eyebrow section-head__eyebrow"><%= recentWork.eyebrow %></p><% } %>
+          <h2 class="section-head__title text-balance"><%= recentWork.title %></h2>
+        </div>
+        <% if (recentWork.settings && recentWork.settings.cta) { %>
+          <a href="<%= safeUrl(recentWork.settings.cta.href) %>" class="btn btn--ghost"><%= recentWork.settings.cta.label %></a>
+        <% } %>
+      </div>
+
+      <div class="installs-grid">
+        <% for (const item of items('recent_work')) { %>
+          <% const itemMeta = item.metadata || {}; %>
+          <article class="install-card">
+            <% const recentMedia = safeUrl(mediaUrl(item), null); %>
+            <% if (recentMedia) { %>
+              <img class="install-card__media" src="<%= recentMedia %>" alt="<%= item.title %>" />
+            <% } else { %>
+              <div class="install-card__media photo-ph <%= itemMeta.placeholderClass || 'photo-ph--brick' %>" data-img-placeholder="<%= itemMeta.imagePlaceholder || itemMeta.imageSlot || item.itemKey %>"></div>
+            <% } %>
+            <div class="install-card__body">
+              <h4 class="install-card__title"><%= item.title %></h4>
+              <% if (item.subtitle) { %><p class="install-card__meta"><%= item.subtitle %></p><% } %>
+            </div>
+          </article>
+        <% } %>
+      </div>
+    </div>
+  </section>
+<% } %>
+
+<%- include('../partials/public/ctaBand', { block: blocksByKey.quote_cta }) %>

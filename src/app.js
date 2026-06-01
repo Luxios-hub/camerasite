@@ -3,6 +3,7 @@ const express = require('express');
 const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
 const { env } = require('./config/env');
+const { createPublicRouter } = require('./routes/publicRoutes');
 
 function resolveFromRoot(...segments) {
   return path.join(__dirname, '..', ...segments);
@@ -37,6 +38,8 @@ function createApp() {
   app.get('/healthz', (req, res) => {
     res.json({ ok: true });
   });
+
+  app.use(createPublicRouter());
 
   return app;
 }

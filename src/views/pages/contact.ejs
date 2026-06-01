@@ -14,6 +14,15 @@
 <% const contactInfo = blocksByKey.contact_info; %>
 <% const quoteForm = blocksByKey.quote_form; %>
 <% const formSettings = (quoteForm && quoteForm.settings) || {}; %>
+<% const quoteState = typeof quoteFormState !== 'undefined' ? quoteFormState : {}; %>
+<% const quoteValues = quoteState.values || {}; %>
+<% const quoteErrors = quoteState.errors || {}; %>
+<% const configuredFormAction = formSettings.action || (settings.contact && settings.contact.formEndpoint) || ''; %>
+<% const formAction = typeof configuredFormAction === 'string' && !configuredFormAction.includes('YOUR_FORM_ID') ? configuredFormAction : '/contact/quote'; %>
+<%
+  const valueFor = (name) => Object.prototype.hasOwnProperty.call(quoteValues, name) ? quoteValues[name] : '';
+  const errorFor = (name) => quoteErrors[name] || null;
+%>
 
 <section class="section">
   <div class="container">
@@ -47,7 +56,17 @@
           <% if (quoteForm.eyebrow) { %><p class="eyebrow section-head__eyebrow"><%= quoteForm.eyebrow %></p><% } %>
           <h2 class="section-head__title" style="font-size: var(--fs-xl); margin-bottom: var(--space-5);"><%= quoteForm.title %></h2>
 
-          <form action="<%= safeUrl(formSettings.action || settings.contact?.formEndpoint || '#') %>" method="<%= safeFormMethod(formSettings.method || 'POST') %>" class="form-grid" name="<%= safeFormName(formSettings.formName || 'quote') %>">
+          <% if (quoteState.status === 'success') { %>
+            <div class="form-message form-message--success" role="status">
+              Thanks, your quote request has been received. We will respond within one business day.
+            </div>
+          <% } else if (quoteState.generalError) { %>
+            <div class="form-message form-message--error" role="alert">
+              <%= quoteState.generalError %>
+            </div>
+          <% } %>
+
+          <form action="<%= safeUrl(formAction, '/contact/quote') %>" method="<%= safeFormMethod(formSettings.method || 'POST') %>" class="form-grid" name="<%= safeFormName(formSettings.formName || 'quote') %>">
             <% if (formSettings.honeypotField) { %>
               <input type="text" name="<%= safeFormName(formSettings.honeypotField, 'bot-field') %>" tabindex="-1" autocomplete="off" style="position:absolute; left:-9999px;" aria-hidden="true" />
             <% } %>
@@ -56,21 +75,39 @@
             <% for (let fieldIndex = 0; fieldIndex < fields.length; fieldIndex += 1) { %>
               <% const field = fields[fieldIndex]; %>
               <% const fieldAttrs = safeFormField(field, fieldIndex); %>
+              <% const fieldValue = valueFor(fieldAttrs.name); %>
+              <% const fieldError = errorFor(fieldAttrs.name); %>
               <% if (fieldAttrs.type === 'select') { %>
                 <% const options = fieldAttrs.sourceName === 'type' ? (formSettings.propertyTypes || []) : (formSettings.cameraCounts || []); %>
                 <div class="form-field">
                   <label for="<%= fieldAttrs.id %>"><%= field.label %></label>
-                  <select id="<%= fieldAttrs.id %>" name="<%= fieldAttrs.name %>" <% if (fieldAttrs.required) { %>required<% } %>>
-                    <option value=""><%= fieldAttrs.sourceName === 'type' ? 'Select...' : (options[0] || 'Not sure yet') %></option>
+                  <select
+                    id="<%= fieldAttrs.id %>"
+                    name="<%= fieldAttrs.name %>"
+                    <% if (fieldAttrs.required) { %>required<% } %>
+                    <% if (fieldError) { %>aria-invalid="true" aria-describedby="<%= fieldAttrs.id %>-error"<% } %>
+                  >
+                    <option value="" <% if (fieldValue === '') { %>selected<% } %>><%= fieldAttrs.sourceName === 'type' ? 'Select...' : (options[0] || 'Not sure yet') %></option>
                     <% for (const option of (fieldAttrs.sourceName === 'cameras' ? options.slice(1) : options)) { %>
-                      <option><%= option %></option>
+                      <option value="<%= option %>" <% if (fieldValue === option) { %>selected<% } %>><%= option %></option>
                     <% } %>
                   </select>
+                  <% if (fieldError) { %>
+                    <p class="form-field__error" id="<%= fieldAttrs.id %>-error" data-field-error-for="<%= fieldAttrs.name %>"><%= fieldError %></p>
+                  <% } %>
                 </div>
               <% } else if (fieldAttrs.type === 'textarea') { %>
                 <div class="form-field form-field--full">
                   <label for="<%= fieldAttrs.id %>"><%= field.label %></label>
-                  <textarea id="<%= fieldAttrs.id %>" name="<%= fieldAttrs.name %>" placeholder="<%= formSettings.placeholder || '' %>"></textarea>
+                  <textarea
+                    id="<%= fieldAttrs.id %>"
+                    name="<%= fieldAttrs.name %>"
+                    placeholder="<%= formSettings.placeholder || '' %>"
+                    <% if (fieldError) { %>aria-invalid="true" aria-describedby="<%= fieldAttrs.id %>-error"<% } %>
+                  ><%= fieldValue %></textarea>
+                  <% if (fieldError) { %>
+                    <p class="form-field__error" id="<%= fieldAttrs.id %>-error" data-field-error-for="<%= fieldAttrs.name %>"><%= fieldError %></p>
+                  <% } %>
                 </div>
               <% } else { %>
                 <div class="form-field">
@@ -79,12 +116,17 @@
                     type="<%= fieldAttrs.type %>"
                     id="<%= fieldAttrs.id %>"
                     name="<%= fieldAttrs.name %>"
+                    value="<%= fieldValue %>"
                     <% if (fieldAttrs.required) { %>required<% } %>
                     <% if (fieldAttrs.autocomplete) { %>autocomplete="<%= fieldAttrs.autocomplete %>"<% } %>
                     <% if (fieldAttrs.pattern) { %>pattern="<%= fieldAttrs.pattern %>"<% } %>
                     <% if (fieldAttrs.maxlength) { %>maxlength="<%= fieldAttrs.maxlength %>"<% } %>
                     <% if (fieldAttrs.inputmode) { %>inputmode="<%= fieldAttrs.inputmode %>"<% } %>
+                    <% if (fieldError) { %>aria-invalid="true" aria-describedby="<%= fieldAttrs.id %>-error"<% } %>
                   />
+                  <% if (fieldError) { %>
+                    <p class="form-field__error" id="<%= fieldAttrs.id %>-error" data-field-error-for="<%= fieldAttrs.name %>"><%= fieldError %></p>
+                  <% } %>
                 </div>
               <% } %>
             <% } %>

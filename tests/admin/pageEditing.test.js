@@ -656,6 +656,83 @@ test('off-domain canonical URL returns a page form error and does not update pub
   assert.match(publicResidential.text, /Home security (?:that&#39;s|that's) actually neighborly/);
 });
 
+test('malformed page media id returns a page form error before updating content', async () => {
+  const { app, auditRepository } = await createAdminEditingTestApp();
+  const agent = request.agent(app);
+
+  await login(agent);
+  const editorPage = await agent.get('/admin/pages/residential').expect(200);
+  const csrfToken = csrfTokenFrom(editorPage.text);
+
+  const response = await agent
+    .post('/admin/pages/residential')
+    .type('form')
+    .send({
+      _csrf: csrfToken,
+      title: 'Bad media title',
+      metaDescription: 'Bad media meta.',
+      ogTitle: 'Bad media OG',
+      ogDescription: 'Bad media og.',
+      ogImageMediaId: 'not-a-uuid',
+      canonicalPath: '/residential.html',
+      headerEyebrow: 'Homes',
+      headerTitle: 'Bad media public title',
+      headerLede: 'This should not publish.',
+      isPublished: 'on'
+    })
+    .expect(400)
+    .expect('content-type', /html/);
+
+  assert.match(response.text, /Select a valid media asset\./);
+  assert.notEqual(auditRepository.events.at(-1).action, 'admin.page.update');
+
+  const publicResidential = await agent
+    .get('/residential')
+    .expect(200)
+    .expect('content-type', /html/);
+
+  assert.doesNotMatch(publicResidential.text, /Bad media public title/);
+  assert.match(publicResidential.text, /Home security (?:that&#39;s|that's) actually neighborly/);
+});
+
+test('malformed item media id returns an item form error before updating content', async () => {
+  const { app, auditRepository } = await createAdminEditingTestApp();
+  const agent = request.agent(app);
+
+  await login(agent);
+  const editPage = await agent
+    .get('/admin/pages/residential/blocks/camera_types/items/smart-doorbells/edit')
+    .expect(200);
+  const csrfToken = csrfTokenFrom(editPage.text);
+
+  const response = await agent
+    .post('/admin/pages/residential/blocks/camera_types/items/smart-doorbells')
+    .type('form')
+    .send({
+      _csrf: csrfToken,
+      title: 'Tampered media item',
+      subtitle: '01 / Front door',
+      body: 'This should not publish.',
+      imageMediaId: 'not-a-uuid',
+      sortOrder: '10',
+      isEnabled: 'on',
+      metadata: '{}'
+    })
+    .expect(400)
+    .expect('content-type', /html/);
+
+  assert.match(response.text, /Select a valid media asset\./);
+  assert.notEqual(auditRepository.events.at(-1).action, 'admin.item.update');
+
+  const publicResidential = await agent
+    .get('/residential')
+    .expect(200)
+    .expect('content-type', /html/);
+
+  assert.doesNotMatch(publicResidential.text, /Tampered media item/);
+  assert.match(publicResidential.text, /Smart doorbells/);
+});
+
 test('settings update rolls back when audit logging fails inside a transaction', async () => {
   const contentRepository = createFakeContentRepository();
   const { app } = await createAdminEditingTestApp({

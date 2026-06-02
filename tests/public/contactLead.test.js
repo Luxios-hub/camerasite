@@ -27,7 +27,7 @@ function createFakeLeadRepository() {
   };
 }
 
-function createPublicTestApp({ leadRepository } = {}) {
+function createPublicTestApp({ leadRepository, ...routerOptions } = {}) {
   const app = express();
 
   app.set('views', path.join(__dirname, '..', '..', 'src', 'views'));
@@ -36,7 +36,8 @@ function createPublicTestApp({ leadRepository } = {}) {
   app.use(express.json());
   app.use(createPublicRouter({
     repository: createSeedRepository(initialContent),
-    leadRepository
+    leadRepository,
+    ...routerOptions
   }));
 
   return app;
@@ -158,6 +159,30 @@ test('POST /contact/quote enforces the name max length', async () => {
   assert.equal(leadRepository.created.length, 0);
   assert.match(response.text, /id="name-error"/);
   assert.match(response.text, /Name must be 120 characters or fewer\./);
+});
+
+test('POST /contact/quote applies a public quote rate limit before storing leads', async () => {
+  const leadRepository = createFakeLeadRepository();
+  const app = createPublicTestApp({
+    leadRepository,
+    quoteRateLimit: {
+      windowMs: 60 * 1000,
+      limit: 1
+    }
+  });
+
+  await request(app)
+    .post('/contact/quote')
+    .send(validForm({ email: 'first@example.com' }))
+    .expect(200);
+
+  await request(app)
+    .post('/contact/quote')
+    .send(validForm({ email: 'second@example.com' }))
+    .expect(429);
+
+  assert.equal(leadRepository.created.length, 1);
+  assert.equal(leadRepository.created[0].input.email, 'first@example.com');
 });
 
 test('leadRepository createLead inserts schema fields with request metadata through an injected client', async () => {

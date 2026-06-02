@@ -1,4 +1,5 @@
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const { z } = require('zod');
 const { createLeadRepository } = require('../repositories/leadRepository');
 const { buildPageViewModel } = require('../services/pageViewModel');
@@ -150,6 +151,28 @@ function requestMeta(req) {
   };
 }
 
+function createQuoteRateLimiter(options = {}) {
+  return rateLimit({
+    windowMs: options.windowMs || 15 * 60 * 1000,
+    limit: options.limit || 5,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: 'Too many quote requests. Please wait and try again.'
+  });
+}
+
+function resolveQuoteRateLimiter(options = {}) {
+  if (options.quoteRateLimiter === false) {
+    return null;
+  }
+
+  if (typeof options.quoteRateLimiter === 'function') {
+    return options.quoteRateLimiter;
+  }
+
+  return createQuoteRateLimiter(options.quoteRateLimit || {});
+}
+
 function resolveLeadRepository(options = {}) {
   if (options.leadRepository) {
     return options.leadRepository;
@@ -189,6 +212,7 @@ async function renderPublicPage(req, res, slug, options = {}, extraLocals = {}, 
 
 function createPublicRouter(options = {}) {
   const router = express.Router();
+  const quoteRateLimiter = resolveQuoteRateLimiter(options);
 
   for (const [path, slug] of PUBLIC_ROUTE_MAP.entries()) {
     router.get(path, async (req, res, next) => {
@@ -204,7 +228,9 @@ function createPublicRouter(options = {}) {
     });
   }
 
-  router.post('/contact/quote', async (req, res, next) => {
+  const quotePostMiddleware = quoteRateLimiter ? [quoteRateLimiter] : [];
+
+  router.post('/contact/quote', ...quotePostMiddleware, async (req, res, next) => {
     try {
       const viewModel = await buildPageViewModel('contact', options.viewModel || options);
 
@@ -276,5 +302,6 @@ function createPublicRouter(options = {}) {
 module.exports = {
   PUBLIC_ROUTE_MAP,
   createPublicRouter,
+  createQuoteRateLimiter,
   createQuoteLeadSchema
 };

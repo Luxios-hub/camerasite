@@ -18,6 +18,7 @@ const {
   buildSettingsUpdates,
   itemFormFromItem,
   itemInputFromBody,
+  isValidUuid,
   pageFormFromPage,
   pageInputFromBody,
   settingsFormFromSettings,
@@ -58,7 +59,7 @@ function parseLeadStatus(value) {
 }
 
 function isValidLeadId(value) {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(stringValue(value).trim());
+  return isValidUuid(value);
 }
 
 function formatLeadDateTime(value) {
@@ -635,6 +636,11 @@ function createAdminRouter(options = {}) {
   router.post('/media/:id/delete', verifyCsrfToken, async (req, res, next) => {
     try {
       if (!ensureMediaRepository(mediaRepository, res)) {
+        return;
+      }
+
+      if (!isValidUuid(req.params.id)) {
+        res.status(404).send('Media asset not found.');
         return;
       }
 

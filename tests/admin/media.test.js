@@ -10,6 +10,15 @@ const initialContent = require('../../src/db/seeds/initialContent');
 const { createMediaRepository } = require('../../src/repositories/mediaRepository');
 const { createMediaStorage, MAX_IMAGE_BYTES } = require('../../src/services/mediaStorage');
 
+const MEDIA_ONE_ID = '11111111-1111-4111-8111-111111111111';
+const USED_MEDIA_ID = '22222222-2222-4222-8222-222222222222';
+const UNUSED_MEDIA_ID = '33333333-3333-4333-8333-333333333333';
+const DELETE_FILE_FAILS_ID = '44444444-4444-4444-8444-444444444444';
+const DELETE_AUDIT_FAILS_ID = '55555555-5555-4555-8555-555555555555';
+const RACE_MEDIA_ID = '66666666-6666-4666-8666-666666666666';
+const CONDITIONAL_RACE_MEDIA_ID = '77777777-7777-4777-8777-777777777777';
+const DB_DELETE_FAILS_ID = '88888888-8888-4888-8888-888888888888';
+
 const SESSION_OPTIONS = {
   useMemoryStore: true,
   secret: 'admin-media-test-secret'
@@ -511,7 +520,7 @@ test('media storage rejects empty and oversized image files before writing', asy
 
 test('selecting item media in admin renders the assigned image in public HTML', async () => {
   const mediaRepository = createFakeMediaRepository([{
-    id: 'media-1',
+    id: MEDIA_ONE_ID,
     originalName: 'door.png',
     storedName: '2026/06/door.png',
     mimeType: 'image/png',
@@ -546,7 +555,7 @@ test('selecting item media in admin renders the assigned image in public HTML', 
       badge: '',
       linkLabel: '',
       linkUrl: '',
-      imageMediaId: 'media-1',
+      imageMediaId: MEDIA_ONE_ID,
       sortOrder: '10',
       isEnabled: 'on',
       metadata: JSON.stringify({
@@ -586,7 +595,7 @@ test('delete rejects used media and deletes unused media metadata and file', asy
   const deleted = [];
   const mediaRepository = createFakeMediaRepository([
     {
-      id: 'used-media',
+      id: USED_MEDIA_ID,
       originalName: 'used.png',
       storedName: '2026/06/used.png',
       mimeType: 'image/png',
@@ -596,7 +605,7 @@ test('delete rejects used media and deletes unused media metadata and file', asy
       publicPath: '/uploads/media/2026/06/used.png'
     },
     {
-      id: 'unused-media',
+      id: UNUSED_MEDIA_ID,
       originalName: 'unused.png',
       storedName: '2026/06/unused.png',
       mimeType: 'image/png',
@@ -606,7 +615,7 @@ test('delete rejects used media and deletes unused media metadata and file', asy
       publicPath: '/uploads/media/2026/06/unused.png'
     }
   ]);
-  mediaRepository.usedIds.add('used-media');
+  mediaRepository.usedIds.add(USED_MEDIA_ID);
   const mediaStorage = {
     async deleteMediaFile(asset) {
       deleted.push(asset.id);
@@ -620,30 +629,30 @@ test('delete rejects used media and deletes unused media metadata and file', asy
   const csrfToken = csrfTokenFrom(mediaPage.text);
 
   const usedResponse = await agent
-    .post('/admin/media/used-media/delete')
+    .post(`/admin/media/${USED_MEDIA_ID}/delete`)
     .type('form')
     .send({ _csrf: csrfToken })
     .expect(409)
     .expect('content-type', /html/);
 
   assert.match(usedResponse.text, /Media asset is currently assigned and cannot be deleted\./);
-  assert.ok(mediaRepository.assets.some((asset) => asset.id === 'used-media'));
+  assert.ok(mediaRepository.assets.some((asset) => asset.id === USED_MEDIA_ID));
   assert.deepEqual(deleted, []);
 
   await agent
-    .post('/admin/media/unused-media/delete')
+    .post(`/admin/media/${UNUSED_MEDIA_ID}/delete`)
     .type('form')
     .send({ _csrf: csrfToken })
     .expect(302)
     .expect('location', '/admin/media?deleted=1');
 
-  assert.ok(!mediaRepository.assets.some((asset) => asset.id === 'unused-media'));
-  assert.deepEqual(deleted, ['unused-media']);
+  assert.ok(!mediaRepository.assets.some((asset) => asset.id === UNUSED_MEDIA_ID));
+  assert.deepEqual(deleted, [UNUSED_MEDIA_ID]);
 });
 
 test('delete removes metadata before reporting a retryable file deletion failure', async () => {
   const mediaRepository = createFakeMediaRepository([{
-    id: 'delete-file-fails',
+    id: DELETE_FILE_FAILS_ID,
     originalName: 'delete-file-fails.png',
     storedName: '2026/06/delete-file-fails.png',
     mimeType: 'image/png',
@@ -665,19 +674,19 @@ test('delete removes metadata before reporting a retryable file deletion failure
   const csrfToken = csrfTokenFrom(mediaPage.text);
 
   await agent
-    .post('/admin/media/delete-file-fails/delete')
+    .post(`/admin/media/${DELETE_FILE_FAILS_ID}/delete`)
     .type('form')
     .send({ _csrf: csrfToken })
     .expect(500)
     .expect('content-type', /html/);
 
-  assert.ok(!mediaRepository.assets.some((asset) => asset.id === 'delete-file-fails'));
+  assert.ok(!mediaRepository.assets.some((asset) => asset.id === DELETE_FILE_FAILS_ID));
 });
 
 test('delete audit failure keeps metadata and does not delete the file', async () => {
   const deleted = [];
   const mediaRepository = createFakeMediaRepository([{
-    id: 'delete-audit-fails',
+    id: DELETE_AUDIT_FAILS_ID,
     originalName: 'delete-audit-fails.png',
     storedName: '2026/06/delete-audit-fails.png',
     mimeType: 'image/png',
@@ -703,19 +712,19 @@ test('delete audit failure keeps metadata and does not delete the file', async (
   const csrfToken = csrfTokenFrom(mediaPage.text);
 
   await agent
-    .post('/admin/media/delete-audit-fails/delete')
+    .post(`/admin/media/${DELETE_AUDIT_FAILS_ID}/delete`)
     .type('form')
     .send({ _csrf: csrfToken })
     .expect(500);
 
-  assert.ok(mediaRepository.assets.some((asset) => asset.id === 'delete-audit-fails'));
+  assert.ok(mediaRepository.assets.some((asset) => asset.id === DELETE_AUDIT_FAILS_ID));
   assert.deepEqual(deleted, []);
 });
 
 test('delete rechecks usage inside transaction and aborts if media becomes used', async () => {
   const deleted = [];
   const mediaRepository = createFakeMediaRepository([{
-    id: 'race-media',
+    id: RACE_MEDIA_ID,
     originalName: 'race.png',
     storedName: '2026/06/race.png',
     mimeType: 'image/png',
@@ -725,7 +734,7 @@ test('delete rechecks usage inside transaction and aborts if media becomes used'
     publicPath: '/uploads/media/2026/06/race.png'
   }], {
     beforeTransactionCallback(transactionRepository) {
-      transactionRepository.usedIds.add('race-media');
+      transactionRepository.usedIds.add(RACE_MEDIA_ID);
     }
   });
   const mediaStorage = {
@@ -741,21 +750,21 @@ test('delete rechecks usage inside transaction and aborts if media becomes used'
   const csrfToken = csrfTokenFrom(mediaPage.text);
 
   const response = await agent
-    .post('/admin/media/race-media/delete')
+    .post(`/admin/media/${RACE_MEDIA_ID}/delete`)
     .type('form')
     .send({ _csrf: csrfToken })
     .expect(409)
     .expect('content-type', /html/);
 
   assert.match(response.text, /Media asset is currently assigned and cannot be deleted\./);
-  assert.ok(mediaRepository.assets.some((asset) => asset.id === 'race-media'));
+  assert.ok(mediaRepository.assets.some((asset) => asset.id === RACE_MEDIA_ID));
   assert.deepEqual(deleted, []);
 });
 
 test('delete relies on conditional metadata delete and does not remove file when it deletes no rows', async () => {
   const deleted = [];
   const mediaRepository = createFakeMediaRepository([{
-    id: 'conditional-race-media',
+    id: CONDITIONAL_RACE_MEDIA_ID,
     originalName: 'conditional-race.png',
     storedName: '2026/06/conditional-race.png',
     mimeType: 'image/png',
@@ -764,7 +773,7 @@ test('delete relies on conditional metadata delete and does not remove file when
     caption: '',
     publicPath: '/uploads/media/2026/06/conditional-race.png'
   }], {
-    conditionalDeleteMissIds: new Set(['conditional-race-media'])
+    conditionalDeleteMissIds: new Set([CONDITIONAL_RACE_MEDIA_ID])
   });
   const mediaStorage = {
     async deleteMediaFile(asset) {
@@ -779,21 +788,21 @@ test('delete relies on conditional metadata delete and does not remove file when
   const csrfToken = csrfTokenFrom(mediaPage.text);
 
   const response = await agent
-    .post('/admin/media/conditional-race-media/delete')
+    .post(`/admin/media/${CONDITIONAL_RACE_MEDIA_ID}/delete`)
     .type('form')
     .send({ _csrf: csrfToken })
     .expect(409)
     .expect('content-type', /html/);
 
   assert.match(response.text, /Media asset is currently assigned and cannot be deleted\./);
-  assert.ok(mediaRepository.assets.some((asset) => asset.id === 'conditional-race-media'));
+  assert.ok(mediaRepository.assets.some((asset) => asset.id === CONDITIONAL_RACE_MEDIA_ID));
   assert.deepEqual(deleted, []);
 });
 
 test('delete metadata failure does not remove the file first', async () => {
   const deleted = [];
   const mediaRepository = createFakeMediaRepository([{
-    id: 'db-delete-fails',
+    id: DB_DELETE_FAILS_ID,
     originalName: 'db-delete-fails.png',
     storedName: '2026/06/db-delete-fails.png',
     mimeType: 'image/png',
@@ -802,7 +811,7 @@ test('delete metadata failure does not remove the file first', async () => {
     caption: '',
     publicPath: '/uploads/media/2026/06/db-delete-fails.png'
   }], {
-    failDeleteIds: new Set(['db-delete-fails'])
+    failDeleteIds: new Set([DB_DELETE_FAILS_ID])
   });
   const mediaStorage = {
     async deleteMediaFile(asset) {
@@ -817,13 +826,39 @@ test('delete metadata failure does not remove the file first', async () => {
   const csrfToken = csrfTokenFrom(mediaPage.text);
 
   await agent
-    .post('/admin/media/db-delete-fails/delete')
+    .post(`/admin/media/${DB_DELETE_FAILS_ID}/delete`)
     .type('form')
     .send({ _csrf: csrfToken })
     .expect(500);
 
-  assert.ok(mediaRepository.assets.some((asset) => asset.id === 'db-delete-fails'));
+  assert.ok(mediaRepository.assets.some((asset) => asset.id === DB_DELETE_FAILS_ID));
   assert.deepEqual(deleted, []);
+});
+
+test('malformed media delete id returns 404 before querying the media repository', async () => {
+  const mediaRepository = {
+    async listMediaAssets() {
+      return [];
+    },
+    async countMediaAssets() {
+      return 0;
+    },
+    async withTransaction() {
+      throw new Error('media repository should not be called for malformed IDs');
+    }
+  };
+  const { app } = await createAdminMediaTestApp({ mediaRepository });
+  const agent = request.agent(app);
+
+  await login(agent);
+  const mediaPage = await agent.get('/admin/media').expect(200);
+  const csrfToken = csrfTokenFrom(mediaPage.text);
+
+  await agent
+    .post('/admin/media/not-a-uuid/delete')
+    .type('form')
+    .send({ _csrf: csrfToken })
+    .expect(404);
 });
 
 test('media repository supports CRUD, listing, counting, and usage checks with an injected client', async () => {

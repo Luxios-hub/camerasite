@@ -1,4 +1,5 @@
 const path = require('node:path');
+const crypto = require('node:crypto');
 const express = require('express');
 const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
@@ -58,11 +59,28 @@ function createSessionMiddleware(options = {}) {
   });
 }
 
+function attachCspNonce(req, res, next) {
+  res.locals.cspNonce = crypto.randomBytes(16).toString('base64');
+  next();
+}
+
+function createSecurityMiddleware() {
+  return helmet({
+    contentSecurityPolicy: {
+      directives: {
+        scriptSrc: ["'self'", (req, res) => `'nonce-${res.locals.cspNonce}'`]
+      }
+    }
+  });
+}
+
 function createApp(options = {}) {
   const app = express();
 
   app.disable('x-powered-by');
-  app.use(helmet());
+  app.set('trust proxy', options.trustProxy ?? (env.NODE_ENV === 'production' ? 1 : false));
+  app.use(attachCspNonce);
+  app.use(createSecurityMiddleware());
   app.use(express.urlencoded({ extended: false }));
   app.use(express.json());
   app.use(cookieParser());

@@ -133,7 +133,7 @@ test('public pages render SEO tags, JSON-LD, and placeholder media fallbacks', a
     .expect('content-type', /html/);
 
   assert.match(response.text, /<meta property="og:title" content="Security Camera Installation in NYC, Long Island &amp; NJ \| CamerasNYC"/);
-  assert.match(response.text, /<script type="application\/ld\+json">/);
+  assert.match(response.text, /<script type="application\/ld\+json"(?: nonce="[^"]+")?>/);
   assert.match(response.text, /"@type": "LocalBusiness"/);
   assert.match(response.text, /class="hero__visual photo-ph photo-ph--dusk"/);
   assert.match(response.text, /data-img-placeholder="hero-front-porch-doorbell"/);

@@ -17,8 +17,9 @@
 <meta name="twitter:card" content="<%= seoDefaults.twitterCard || 'summary_large_image' %>" />
 <link rel="canonical" href="<%= canonicalUrl %>" />
 
+<% const jsonLdNonce = typeof cspNonce === 'string' ? cspNonce : ''; %>
 <% for (const schema of jsonLdSchemas) { %>
-<script type="application/ld+json">
+<script type="application/ld+json"<% if (jsonLdNonce) { %> nonce="<%= jsonLdNonce %>"<% } %>>
 <%- JSON.stringify(schema, null, 2).replace(/<\/script/gi, '<\\/script') %>
 </script>
 <% } %>

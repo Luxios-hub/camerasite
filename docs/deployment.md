@@ -122,6 +122,8 @@ server {
 
 Enable HTTPS with Certbot or use Caddy for automatic certificates.
 
+In production, the app trusts the first reverse proxy so secure admin cookies and request IPs work behind Nginx/Caddy. Keep `X-Forwarded-Proto` and `X-Forwarded-For` headers enabled in the proxy config.
+
 ## Verification After Deploy
 
 Run:

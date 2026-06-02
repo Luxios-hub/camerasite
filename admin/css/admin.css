@@ -12,6 +12,7 @@
   --admin-danger: #b42318;
   --admin-success: #136c43;
   --admin-warning: #8a5a00;
+  --admin-shadow: 0 24px 70px rgba(21, 34, 50, 0.16);
 }
 
 * {
@@ -21,9 +22,11 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: var(--admin-bg);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(243, 245, 247, 0.96)),
+    var(--admin-bg);
   color: var(--admin-ink);
-  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: "Hanken Grotesk", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 15px;
   line-height: 1.45;
 }
@@ -85,10 +88,42 @@ a:hover {
   padding: 28px 20px 48px;
 }
 
-.admin-page--center {
+.admin-page--center,
+.admin-page--auth {
   display: grid;
   min-height: 100vh;
   place-items: center;
+}
+
+.admin-page--auth {
+  isolation: isolate;
+  max-width: none;
+  overflow: hidden;
+  padding: clamp(24px, 5vw, 56px) 20px;
+  position: relative;
+  width: 100%;
+}
+
+.admin-page--auth::before {
+  background-image:
+    linear-gradient(rgba(21, 34, 50, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(21, 34, 50, 0.055) 1px, transparent 1px);
+  background-size: 34px 34px;
+  content: "";
+  inset: 0;
+  opacity: 0.75;
+  position: absolute;
+  z-index: -2;
+}
+
+.admin-page--auth::after {
+  background:
+    linear-gradient(135deg, rgba(11, 92, 173, 0.16), transparent 42%),
+    linear-gradient(315deg, rgba(19, 108, 67, 0.1), transparent 38%);
+  content: "";
+  inset: 0;
+  position: absolute;
+  z-index: -1;
 }
 
 .admin-page__head {
@@ -101,6 +136,8 @@ a:hover {
 
 .admin-page__head h1,
 .admin-card h1 {
+  font-family: "Schibsted Grotesk", "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: 0;
   margin: 0;
 }
 
@@ -132,6 +169,98 @@ a:hover {
 .admin-card {
   padding: 28px;
   width: min(100%, 420px);
+}
+
+.admin-login {
+  border-color: rgba(170, 182, 194, 0.82);
+  box-shadow: var(--admin-shadow);
+  display: grid;
+  gap: 22px;
+  max-width: 438px;
+  overflow: hidden;
+  padding: clamp(26px, 4vw, 34px);
+  position: relative;
+  width: calc(100vw - 32px);
+}
+
+.admin-login::before {
+  background: linear-gradient(90deg, var(--admin-accent), var(--admin-success));
+  content: "";
+  height: 4px;
+  inset: 0 0 auto;
+  position: absolute;
+}
+
+.admin-login__brand {
+  align-items: center;
+  display: flex;
+  gap: 14px;
+}
+
+.admin-login__mark {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.18), transparent 42%),
+    #152232;
+  border-radius: 8px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
+  display: block;
+  flex: 0 0 auto;
+  height: 44px;
+  position: relative;
+  width: 44px;
+}
+
+.admin-login__mark::before,
+.admin-login__mark::after {
+  content: "";
+  position: absolute;
+}
+
+.admin-login__mark::before {
+  border: 2px solid rgba(255, 255, 255, 0.88);
+  border-radius: 50%;
+  height: 16px;
+  left: 12px;
+  top: 11px;
+  width: 16px;
+}
+
+.admin-login__mark::after {
+  background: #ffffff;
+  border-radius: 999px;
+  height: 8px;
+  right: 10px;
+  top: 12px;
+  width: 8px;
+}
+
+.admin-login .admin-kicker {
+  margin-bottom: 2px;
+}
+
+.admin-login h1 {
+  font-size: clamp(1.85rem, 5vw, 2.35rem);
+  line-height: 1.02;
+}
+
+.admin-login .admin-login__lede {
+  color: var(--admin-muted);
+  font-size: 0.96rem;
+  margin: -10px 0 0;
+}
+
+.admin-login__form {
+  display: grid;
+  gap: 15px;
+}
+
+.admin-login__form .admin-actions {
+  margin-top: 2px;
+}
+
+.admin-login__button {
+  min-height: 46px;
+  width: 100%;
 }
 
 .admin-card--wide {
@@ -442,6 +571,11 @@ button:hover,
 }
 
 @media (max-width: 760px) {
+  .admin-login {
+    max-width: 360px;
+    width: 100%;
+  }
+
   .admin-shellbar {
     align-items: start;
     grid-template-columns: 1fr;

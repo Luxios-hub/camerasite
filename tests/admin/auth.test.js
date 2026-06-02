@@ -93,6 +93,19 @@ test('GET /admin redirects logged-out users to the admin login page', async () =
   assert.equal(response.headers.location, '/admin/login');
 });
 
+test('GET /admin/login renders a centered auth-specific layout', async () => {
+  const { app } = await createAdminAuthTestApp();
+
+  const response = await request(app)
+    .get('/admin/login')
+    .expect(200)
+    .expect('content-type', /html/);
+
+  assert.match(response.text, /class="admin-page admin-page--auth"/);
+  assert.match(response.text, /class="admin-card admin-login"/);
+  assert.match(response.text, /class="admin-login__brand"/);
+});
+
 test('POST /admin/login rejects bad credentials with a generic error and no session', async () => {
   const { app, adminRepository, auditRepository } = await createAdminAuthTestApp();
   const agent = request.agent(app);

@@ -1,23 +1,33 @@
-<main class="admin-page">
-  <section class="admin-card">
-    <p class="admin-kicker">CamerasNYC Admin</p>
-    <h1>Sign in</h1>
+<main class="admin-page admin-page--auth">
+  <section class="admin-card admin-login" aria-labelledby="admin-login-title">
+    <div class="admin-login__brand">
+      <span class="admin-login__mark" aria-hidden="true"></span>
+      <div>
+        <p class="admin-kicker">CamerasNYC Admin</p>
+        <h1 id="admin-login-title">Sign in</h1>
+      </div>
+    </div>
+    <p class="admin-login__lede">Authorized access only.</p>
 
     <% if (error) { %>
       <p class="admin-error" role="alert"><%= error %></p>
     <% } %>
 
-    <form method="post" action="/admin/login" novalidate>
+    <form class="admin-login__form" method="post" action="/admin/login" novalidate>
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
 
-      <label for="email">Email</label>
-      <input id="email" name="email" type="email" autocomplete="username" value="<%= email || '' %>" required>
+      <div class="admin-field">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" autocomplete="username" value="<%= email || '' %>" required>
+      </div>
 
-      <label for="password">Password</label>
-      <input id="password" name="password" type="password" autocomplete="current-password" required>
+      <div class="admin-field">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required>
+      </div>
 
       <div class="admin-actions">
-        <button type="submit">Sign in</button>
+        <button class="admin-login__button" type="submit">Sign in</button>
       </div>
     </form>
   </section>

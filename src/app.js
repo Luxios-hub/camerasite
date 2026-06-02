@@ -2,8 +2,14 @@ const path = require('node:path');
 const express = require('express');
 const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
+const session = require('express-session');
+const pgSession = require('connect-pg-simple');
 const { env } = require('./config/env');
+const { pool } = require('./db/pool');
+const { createAdminRouter } = require('./routes/adminRoutes');
 const { createPublicRouter } = require('./routes/publicRoutes');
+
+const PgSessionStore = pgSession(session);
 
 function resolveFromRoot(...segments) {
   return path.join(__dirname, '..', ...segments);
@@ -17,7 +23,42 @@ function resolveUploadRoot() {
   return resolveFromRoot(env.UPLOAD_ROOT);
 }
 
-function createApp() {
+function createSessionStore(sessionOptions = {}) {
+  if (sessionOptions.store) {
+    return sessionOptions.store;
+  }
+
+  if (sessionOptions.useMemoryStore) {
+    return undefined;
+  }
+
+  return new PgSessionStore({
+    pool: sessionOptions.pool || pool,
+    tableName: 'session',
+    createTableIfMissing: false
+  });
+}
+
+function createSessionMiddleware(options = {}) {
+  const sessionOptions = options.session || {};
+
+  return session({
+    name: sessionOptions.name || 'camerasnyc.sid',
+    secret: sessionOptions.secret || env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    store: createSessionStore(sessionOptions),
+    cookie: {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: env.NODE_ENV === 'production',
+      maxAge: sessionOptions.maxAge || 1000 * 60 * 60 * 8,
+      ...(sessionOptions.cookie || {})
+    }
+  });
+}
+
+function createApp(options = {}) {
   const app = express();
 
   app.disable('x-powered-by');
@@ -35,15 +76,21 @@ function createApp() {
   app.use('/uploads', express.static(resolveUploadRoot()));
   app.use('/admin/css', express.static(resolveFromRoot('admin', 'css')));
 
+  if (options.session !== false) {
+    app.use(createSessionMiddleware(options));
+  }
+
   app.get('/healthz', (req, res) => {
     res.json({ ok: true });
   });
 
-  app.use(createPublicRouter());
+  app.use('/admin', createAdminRouter(options));
+  app.use(createPublicRouter(options.public || {}));
 
   return app;
 }
 
 module.exports = {
-  createApp
+  createApp,
+  createSessionMiddleware
 };

@@ -1,0 +1,91 @@
+<main class="admin-page">
+  <div class="admin-page__head">
+    <div>
+      <p class="admin-kicker">Item editor</p>
+      <h1><%= mode === 'new' ? 'New item' : (item.title || item.itemKey || 'Edit item') %></h1>
+      <p class="admin-muted"><%= page.slug %> / <%= block.blockKey %></p>
+    </div>
+    <a class="admin-button admin-button--ghost" href="/admin/pages/<%= encodeURIComponent(page.slug) %>">Back to page</a>
+  </div>
+
+  <% if (error) { %>
+    <p class="admin-error" role="alert"><%= error %></p>
+  <% } %>
+
+  <form
+    method="post"
+    action="<%= mode === 'new'
+      ? `/admin/pages/${encodeURIComponent(page.slug)}/blocks/${encodeURIComponent(block.blockKey)}/items`
+      : `/admin/pages/${encodeURIComponent(page.slug)}/blocks/${encodeURIComponent(block.blockKey)}/items/${encodeURIComponent(item.id || item.itemKey)}` %>"
+    class="admin-form"
+  >
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+    <section class="admin-panel">
+      <div class="admin-panel__head">
+        <h2>Content</h2>
+      </div>
+      <div class="admin-panel__body admin-form__grid">
+        <div class="admin-field admin-field--full">
+          <label for="title">Title</label>
+          <input id="title" name="title" value="<%= form.title %>">
+        </div>
+        <div class="admin-field">
+          <label for="subtitle">Subtitle</label>
+          <input id="subtitle" name="subtitle" value="<%= form.subtitle %>">
+        </div>
+        <div class="admin-field">
+          <label for="price">Price</label>
+          <input id="price" name="price" value="<%= form.price %>">
+        </div>
+        <div class="admin-field admin-field--full">
+          <label for="body">Body</label>
+          <textarea id="body" name="body"><%= form.body %></textarea>
+        </div>
+        <div class="admin-field">
+          <label for="badge">Badge</label>
+          <input id="badge" name="badge" value="<%= form.badge %>">
+        </div>
+        <div class="admin-field">
+          <label for="sortOrder">Sort order</label>
+          <input id="sortOrder" name="sortOrder" type="number" value="<%= form.sortOrder %>">
+        </div>
+        <div class="admin-field">
+          <label for="linkLabel">Link label</label>
+          <input id="linkLabel" name="linkLabel" value="<%= form.linkLabel %>">
+        </div>
+        <div class="admin-field">
+          <label for="linkUrl">Link URL</label>
+          <input id="linkUrl" name="linkUrl" value="<%= form.linkUrl %>">
+        </div>
+        <label class="admin-check">
+          <input type="checkbox" name="isFeatured" value="on" <%= form.isFeatured ? 'checked' : '' %>>
+          Featured
+        </label>
+        <label class="admin-check">
+          <input type="checkbox" name="isEnabled" value="on" <%= form.isEnabled ? 'checked' : '' %>>
+          Enabled
+        </label>
+        <div class="admin-field admin-field--full">
+          <label for="metadata">Metadata JSON</label>
+          <textarea id="metadata" name="metadata" class="admin-code"><%= form.metadata %></textarea>
+        </div>
+      </div>
+    </section>
+
+    <div class="admin-actions">
+      <button type="submit"><%= mode === 'new' ? 'Create item' : 'Save item' %></button>
+    </div>
+  </form>
+
+  <% if (mode === 'edit') { %>
+  <form
+    method="post"
+    action="/admin/pages/<%= encodeURIComponent(page.slug) %>/blocks/<%= encodeURIComponent(block.blockKey) %>/items/<%= encodeURIComponent(item.id || item.itemKey) %>/delete"
+      class="admin-actions admin-section-gap"
+    >
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button type="submit" class="admin-button--danger">Disable item</button>
+    </form>
+  <% } %>
+</main>

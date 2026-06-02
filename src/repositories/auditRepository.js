@@ -19,6 +19,16 @@ function requiredText(value, fieldName) {
   return text;
 }
 
+function limitValue(value, fallback = 5) {
+  const parsed = Number(value);
+
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    return fallback;
+  }
+
+  return Math.min(parsed, 100);
+}
+
 function mapAuditEvent(row) {
   if (!row) {
     return null;
@@ -61,8 +71,23 @@ function createAuditRepository(db = pool) {
     return mapAuditEvent(result.rows[0]);
   }
 
+  async function listAuditEvents(options = {}) {
+    const result = await db.query(
+      `
+        select *
+        from admin_audit_log
+        order by created_at desc
+        limit $1
+      `,
+      [limitValue(options.limit)]
+    );
+
+    return result.rows.map(mapAuditEvent);
+  }
+
   return {
-    logAuditEvent
+    logAuditEvent,
+    listAuditEvents
   };
 }
 
@@ -74,8 +99,13 @@ async function logAuditEvent(input) {
   return defaultRepository().logAuditEvent(input);
 }
 
+async function listAuditEvents(options) {
+  return defaultRepository().listAuditEvents(options);
+}
+
 module.exports = {
   createAuditRepository,
   logAuditEvent,
+  listAuditEvents,
   mapAuditEvent
 };

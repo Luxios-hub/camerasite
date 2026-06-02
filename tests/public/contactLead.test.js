@@ -275,3 +275,34 @@ test('leadRepository lists, reads, and updates leads through an injected client'
   assert.equal(updated.status, 'contacted');
   assert.equal(updated.updatedAt, 'updated-now');
 });
+
+test('leadRepository counts leads by status through an injected client', async () => {
+  const { createLeadRepository } = require('../../src/repositories/leadRepository');
+  const calls = [];
+  const db = {
+    async query(sql, params = []) {
+      calls.push({ sql, params });
+      return {
+        rows: [
+          { status: 'new', count: 2 },
+          { status: 'quoted', count: 1 }
+        ]
+      };
+    }
+  };
+  const repository = createLeadRepository(db);
+
+  const counts = await repository.countLeadsByStatus();
+
+  assert.equal(calls.length, 1);
+  assert.match(calls[0].sql, /select\s+status/i);
+  assert.match(calls[0].sql, /count\(\*\)::int\s+as\s+count/i);
+  assert.match(calls[0].sql, /from\s+leads/i);
+  assert.match(calls[0].sql, /group\s+by\s+status/i);
+  assert.match(calls[0].sql, /order\s+by\s+status/i);
+  assert.deepEqual(calls[0].params, []);
+  assert.deepEqual(counts, [
+    { status: 'new', count: 2 },
+    { status: 'quoted', count: 1 }
+  ]);
+});

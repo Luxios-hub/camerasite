@@ -5,118 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
     <title><%= title %> | CamerasNYC Admin</title>
-    <style>
-      :root {
-        color-scheme: light;
-        --admin-bg: #f5f7fa;
-        --admin-ink: #101828;
-        --admin-muted: #667085;
-        --admin-line: #d0d5dd;
-        --admin-accent: #005fcc;
-        --admin-danger: #b42318;
-        --admin-card: #ffffff;
-      }
-
-      * {
-        box-sizing: border-box;
-      }
-
-      body {
-        margin: 0;
-        min-height: 100vh;
-        background: var(--admin-bg);
-        color: var(--admin-ink);
-        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      }
-
-      .admin-page {
-        min-height: 100vh;
-        display: grid;
-        place-items: center;
-        padding: 32px 16px;
-      }
-
-      .admin-card {
-        width: min(100%, 420px);
-        background: var(--admin-card);
-        border: 1px solid var(--admin-line);
-        border-radius: 8px;
-        padding: 28px;
-        box-shadow: 0 16px 40px rgba(16, 24, 40, 0.08);
-      }
-
-      .admin-card--wide {
-        width: min(100%, 720px);
-      }
-
-      .admin-kicker {
-        margin: 0 0 8px;
-        color: var(--admin-muted);
-        font-size: 0.78rem;
-        font-weight: 700;
-        letter-spacing: 0;
-        text-transform: uppercase;
-      }
-
-      h1 {
-        margin: 0 0 18px;
-        font-size: 1.75rem;
-        line-height: 1.15;
-      }
-
-      label {
-        display: block;
-        margin: 18px 0 6px;
-        font-weight: 700;
-      }
-
-      input {
-        width: 100%;
-        border: 1px solid var(--admin-line);
-        border-radius: 6px;
-        padding: 12px 14px;
-        font: inherit;
-      }
-
-      input:focus {
-        border-color: var(--admin-accent);
-        outline: 3px solid rgba(0, 95, 204, 0.14);
-      }
-
-      button {
-        border: 0;
-        border-radius: 6px;
-        background: var(--admin-accent);
-        color: #ffffff;
-        cursor: pointer;
-        font: inherit;
-        font-weight: 700;
-        padding: 12px 16px;
-      }
-
-      button:hover {
-        background: #004aa3;
-      }
-
-      .admin-actions {
-        margin-top: 22px;
-      }
-
-      .admin-error {
-        margin: 0 0 16px;
-        border: 1px solid #fecdca;
-        border-radius: 6px;
-        background: #fffbfa;
-        color: var(--admin-danger);
-        padding: 12px 14px;
-      }
-
-      .admin-muted {
-        color: var(--admin-muted);
-      }
-    </style>
+    <link rel="stylesheet" href="/admin/css/admin.css">
   </head>
   <body>
+    <% if (adminUser) { %>
+      <header class="admin-shellbar">
+        <a class="admin-shellbar__brand" href="/admin">CamerasNYC Admin</a>
+        <nav class="admin-shellbar__nav" aria-label="Admin">
+          <a href="/admin">Dashboard</a>
+          <a href="/admin/settings">Settings</a>
+          <a href="/admin/pages">Pages</a>
+        </nav>
+        <span class="admin-shellbar__user"><%= adminUser.displayName %></span>
+      </header>
+    <% } %>
     <%- body %>
   </body>
 </html>

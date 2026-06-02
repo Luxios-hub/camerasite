@@ -167,11 +167,28 @@ function createLeadRepository(db = pool) {
     return mapLead(result.rows[0]);
   }
 
+  async function countLeadsByStatus() {
+    const result = await db.query(
+      `
+        select status, count(*)::int as count
+        from leads
+        group by status
+        order by status
+      `
+    );
+
+    return result.rows.map((row) => ({
+      status: row.status,
+      count: row.count
+    }));
+  }
+
   return {
     createLead,
     listLeads,
     getLead,
-    updateLeadStatus
+    updateLeadStatus,
+    countLeadsByStatus
   };
 }
 
@@ -195,6 +212,10 @@ async function updateLeadStatus(id, status) {
   return defaultRepository().updateLeadStatus(id, status);
 }
 
+async function countLeadsByStatus() {
+  return defaultRepository().countLeadsByStatus();
+}
+
 module.exports = {
   VALID_LEAD_STATUSES,
   createLeadRepository,
@@ -202,5 +223,6 @@ module.exports = {
   listLeads,
   getLead,
   updateLeadStatus,
+  countLeadsByStatus,
   mapLead
 };

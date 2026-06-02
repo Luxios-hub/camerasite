@@ -1,0 +1,43 @@
+<main class="admin-page">
+  <div class="admin-page__head">
+    <div>
+      <p class="admin-kicker">Content</p>
+      <h1>Pages</h1>
+      <p class="admin-muted">All public pages, paths, publication state, and edit links.</p>
+    </div>
+    <a class="admin-button admin-button--ghost" href="/admin">Dashboard</a>
+  </div>
+
+  <section class="admin-panel">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Slug</th>
+          <th>Path</th>
+          <th>Status</th>
+          <th>Updated</th>
+          <th>Edit</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% for (const page of pages) { %>
+          <tr>
+            <td><%= page.title %></td>
+            <td><%= page.slug %></td>
+            <td><%= page.path || page.canonicalPath %></td>
+            <td>
+              <% if (page.isPublished !== false) { %>
+                <span class="pill pill--on">Published</span>
+              <% } else { %>
+                <span class="pill pill--off">Draft</span>
+              <% } %>
+            </td>
+            <td><%= page.updatedAt || page.updated_at || '' %></td>
+            <td><a href="/admin/pages/<%= encodeURIComponent(page.slug) %>">Edit</a></td>
+          </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </section>
+</main>

@@ -1,0 +1,82 @@
+<main class="admin-page">
+  <div class="admin-page__head">
+    <div>
+      <p class="admin-kicker">Site content</p>
+      <h1>Settings</h1>
+      <p class="admin-muted">Business, contact, review, service area, and credential details.</p>
+    </div>
+    <a class="admin-button admin-button--ghost" href="/admin">Dashboard</a>
+  </div>
+
+  <% if (saved) { %>
+    <p class="admin-status" role="status">Settings saved.</p>
+  <% } %>
+  <% if (error) { %>
+    <p class="admin-error" role="alert"><%= error %></p>
+  <% } %>
+
+  <form method="post" action="/admin/settings" class="admin-form">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+    <section class="admin-panel">
+      <div class="admin-panel__head">
+        <h2>Business</h2>
+      </div>
+      <div class="admin-panel__body admin-form__grid">
+        <div class="admin-field">
+          <label for="businessName">Business name</label>
+          <input id="businessName" name="businessName" value="<%= form.businessName %>" required>
+        </div>
+        <div class="admin-field">
+          <label for="phoneDisplay">Phone display</label>
+          <input id="phoneDisplay" name="phoneDisplay" value="<%= form.phoneDisplay %>" required>
+        </div>
+        <div class="admin-field">
+          <label for="phoneTel">Phone tel</label>
+          <input id="phoneTel" name="phoneTel" value="<%= form.phoneTel %>" required>
+        </div>
+        <div class="admin-field">
+          <label for="officeText">Office text</label>
+          <input id="officeText" name="officeText" value="<%= form.officeText %>">
+        </div>
+      </div>
+    </section>
+
+    <section class="admin-panel">
+      <div class="admin-panel__head">
+        <h2>Messaging and proof</h2>
+      </div>
+      <div class="admin-panel__body admin-form__grid">
+        <div class="admin-field">
+          <label for="whatsappNumber">WhatsApp number</label>
+          <input id="whatsappNumber" name="whatsappNumber" value="<%= form.whatsappNumber %>">
+        </div>
+        <div class="admin-field">
+          <label for="whatsappMessage">WhatsApp message</label>
+          <input id="whatsappMessage" name="whatsappMessage" value="<%= form.whatsappMessage %>">
+        </div>
+        <div class="admin-field">
+          <label for="reviewRating">Review rating</label>
+          <input id="reviewRating" name="reviewRating" value="<%= form.reviewRating %>">
+        </div>
+        <div class="admin-field">
+          <label for="reviewCount">Review count</label>
+          <input id="reviewCount" name="reviewCount" value="<%= form.reviewCount %>">
+        </div>
+        <div class="admin-field admin-field--full">
+          <label for="serviceAreaText">Service area text</label>
+          <textarea id="serviceAreaText" name="serviceAreaText"><%= form.serviceAreaText %></textarea>
+        </div>
+        <div class="admin-field admin-field--full">
+          <label for="credentialLabels">Credential labels</label>
+          <textarea id="credentialLabels" name="credentialLabels"><%= form.credentialLabels %></textarea>
+        </div>
+      </div>
+    </section>
+
+    <div class="admin-actions">
+      <button type="submit">Save settings</button>
+      <a class="admin-button admin-button--ghost" href="/">View public home</a>
+    </div>
+  </form>
+</main>

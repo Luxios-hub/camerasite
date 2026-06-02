@@ -504,6 +504,52 @@ test('auditRepository logs admin events with an injected client', async () => {
   assert.equal(event.entityType, 'admin_user');
 });
 
+test('auditRepository lists recent audit events newest-first with a default limit', async () => {
+  const { createAuditRepository } = require('../../src/repositories/auditRepository');
+  const calls = [];
+  const db = {
+    async query(sql, params = []) {
+      calls.push({ sql, params });
+      return {
+        rows: [
+          {
+            id: 'audit-2',
+            admin_user_id: 'admin-1',
+            action: 'admin.page.update',
+            entity_type: 'page',
+            entity_id: 'home',
+            summary: 'Updated home page.',
+            created_at: '2026-06-02T12:00:00Z'
+          },
+          {
+            id: 'audit-1',
+            admin_user_id: 'admin-1',
+            action: 'admin.settings.update',
+            entity_type: 'site_settings',
+            entity_id: 'site_settings',
+            summary: 'Updated settings.',
+            created_at: '2026-06-02T11:00:00Z'
+          }
+        ]
+      };
+    }
+  };
+  const repository = createAuditRepository(db);
+
+  const defaultEvents = await repository.listAuditEvents();
+  const limitedEvents = await repository.listAuditEvents({ limit: 2 });
+
+  assert.equal(calls.length, 2);
+  assert.match(calls[0].sql, /from\s+admin_audit_log/i);
+  assert.match(calls[0].sql, /order\s+by\s+created_at\s+desc/i);
+  assert.match(calls[0].sql, /limit\s+\$1/i);
+  assert.deepEqual(calls[0].params, [5]);
+  assert.deepEqual(calls[1].params, [2]);
+  assert.deepEqual(defaultEvents.map((event) => event.id), ['audit-2', 'audit-1']);
+  assert.equal(defaultEvents[0].adminUserId, 'admin-1');
+  assert.equal(limitedEvents[0].entityType, 'page');
+});
+
 test('create-admin hashes the password and upserts an admin through injected dependencies', async () => {
   const { createAdmin, parseArgs } = require('../../scripts/create-admin');
   const upserts = [];

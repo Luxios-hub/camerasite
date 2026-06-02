@@ -1,0 +1,141 @@
+<main class="admin-page">
+  <div class="admin-page__head">
+    <div>
+      <p class="admin-kicker">Page editor</p>
+      <h1><%= page.slug %></h1>
+      <p class="admin-muted"><%= page.path || page.canonicalPath %></p>
+    </div>
+    <div class="admin-actions">
+      <a class="admin-button admin-button--ghost" href="/admin/pages">All pages</a>
+      <a class="admin-button admin-button--ghost" href="<%= page.path || page.canonicalPath || '/' %>">View public</a>
+    </div>
+  </div>
+
+  <% if (saved) { %>
+    <p class="admin-status" role="status">Page saved.</p>
+  <% } %>
+  <% if (error) { %>
+    <p class="admin-error" role="alert"><%= error %></p>
+  <% } %>
+
+  <form method="post" action="/admin/pages/<%= encodeURIComponent(page.slug) %>" class="admin-form">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+    <section class="admin-panel">
+      <div class="admin-panel__head">
+        <h2>Page fields</h2>
+      </div>
+      <div class="admin-panel__body admin-form__grid">
+        <div class="admin-field admin-field--full">
+          <label for="title">Title</label>
+          <input id="title" name="title" value="<%= form.title %>" required>
+        </div>
+        <div class="admin-field admin-field--full">
+          <label for="metaDescription">Meta description</label>
+          <textarea id="metaDescription" name="metaDescription" required><%= form.metaDescription %></textarea>
+        </div>
+        <div class="admin-field">
+          <label for="ogTitle">Open Graph title</label>
+          <input id="ogTitle" name="ogTitle" value="<%= form.ogTitle %>" required>
+        </div>
+        <div class="admin-field">
+          <label for="canonicalPath">Canonical path</label>
+          <input id="canonicalPath" name="canonicalPath" value="<%= form.canonicalPath %>" required>
+        </div>
+        <div class="admin-field admin-field--full">
+          <label for="ogDescription">Open Graph description</label>
+          <textarea id="ogDescription" name="ogDescription" required><%= form.ogDescription %></textarea>
+        </div>
+        <div class="admin-field">
+          <label for="headerEyebrow">Header eyebrow</label>
+          <input id="headerEyebrow" name="headerEyebrow" value="<%= form.headerEyebrow %>">
+        </div>
+        <div class="admin-field">
+          <label for="headerTitle">Header title</label>
+          <input id="headerTitle" name="headerTitle" value="<%= form.headerTitle %>" required>
+        </div>
+        <div class="admin-field admin-field--full">
+          <label for="headerLede">Header lede</label>
+          <textarea id="headerLede" name="headerLede"><%= form.headerLede %></textarea>
+        </div>
+        <label class="admin-check admin-field--full">
+          <input type="checkbox" name="isPublished" value="on" <%= form.isPublished ? 'checked' : '' %>>
+          Published
+        </label>
+      </div>
+    </section>
+
+    <section class="admin-panel">
+      <div class="admin-panel__head">
+        <h2>Blocks</h2>
+      </div>
+      <div class="admin-panel__body">
+        <% for (const block of page.blocks || []) { %>
+          <section class="admin-block-editor">
+            <div class="admin-block-editor__head">
+              <h3><%= block.blockKey %></h3>
+              <a href="/admin/pages/<%= encodeURIComponent(page.slug) %>/blocks/<%= encodeURIComponent(block.blockKey) %>/items/new">New item</a>
+            </div>
+            <div class="admin-form__grid">
+              <div class="admin-field">
+                <label for="block-<%= block.blockKey %>-eyebrow">Eyebrow</label>
+                <input id="block-<%= block.blockKey %>-eyebrow" name="blocks.<%= block.blockKey %>.eyebrow" value="<%= block.eyebrow || '' %>">
+              </div>
+              <div class="admin-field">
+                <label for="block-<%= block.blockKey %>-title">Title</label>
+                <input id="block-<%= block.blockKey %>-title" name="blocks.<%= block.blockKey %>.title" value="<%= block.title || '' %>">
+              </div>
+              <div class="admin-field admin-field--full">
+                <label for="block-<%= block.blockKey %>-lede">Lede</label>
+                <textarea id="block-<%= block.blockKey %>-lede" name="blocks.<%= block.blockKey %>.lede"><%= block.lede || '' %></textarea>
+              </div>
+              <div class="admin-field admin-field--full">
+                <label for="block-<%= block.blockKey %>-body">Body</label>
+                <textarea id="block-<%= block.blockKey %>-body" name="blocks.<%= block.blockKey %>.body"><%= block.body || '' %></textarea>
+              </div>
+              <label class="admin-check admin-field--full">
+                <input type="checkbox" name="blocks.<%= block.blockKey %>.isEnabled" value="on" <%= block.isEnabled !== false ? 'checked' : '' %>>
+                Enabled
+              </label>
+            </div>
+
+            <% if ((block.items || []).length > 0) { %>
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Status</th>
+                    <th>Sort</th>
+                    <th>Edit</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% for (const item of block.items || []) { %>
+                    <tr>
+                      <td><%= item.title || item.itemKey || item.id %></td>
+                      <td>
+                        <% if (item.isEnabled !== false) { %>
+                          <span class="pill pill--on">Enabled</span>
+                        <% } else { %>
+                          <span class="pill pill--off">Disabled</span>
+                        <% } %>
+                      </td>
+                      <td><%= item.sortOrder ?? '' %></td>
+                      <td>
+                        <a href="/admin/pages/<%= encodeURIComponent(page.slug) %>/blocks/<%= encodeURIComponent(block.blockKey) %>/items/<%= encodeURIComponent(item.id || item.itemKey) %>/edit">Edit</a>
+                      </td>
+                    </tr>
+                  <% } %>
+                </tbody>
+              </table>
+            <% } %>
+          </section>
+        <% } %>
+      </div>
+    </section>
+
+    <div class="admin-actions">
+      <button type="submit">Save page</button>
+    </div>
+  </form>
+</main>

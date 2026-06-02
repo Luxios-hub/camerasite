@@ -4,6 +4,12 @@ function jsonValue(value) {
   return value || {};
 }
 
+function integerValue(value, fallback = 0) {
+  const parsed = Number.parseInt(value, 10);
+
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
 function mapPage(row) {
   if (!row) {
     return null;
@@ -80,6 +86,26 @@ function mapItem(row) {
 }
 
 function createContentRepository(db = pool) {
+  async function withTransaction(callback) {
+    if (typeof db.connect !== 'function') {
+      return callback(createContentRepository(db), db);
+    }
+
+    const client = await db.connect();
+
+    try {
+      await client.query('begin');
+      const result = await callback(createContentRepository(client), client);
+      await client.query('commit');
+      return result;
+    } catch (error) {
+      await client.query('rollback');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
   async function upsertSiteSetting(key, value) {
     const result = await db.query(
       `
@@ -270,6 +296,107 @@ function createContentRepository(db = pool) {
     return mapPage(result.rows[0]);
   }
 
+  async function listPages() {
+    const result = await db.query(
+      `
+        select *
+        from pages
+        order by slug
+      `
+    );
+
+    return result.rows.map(mapPage);
+  }
+
+  async function countPages() {
+    const result = await db.query(
+      `
+        select count(*)::int as count
+        from pages
+      `
+    );
+
+    return result.rows[0] ? result.rows[0].count : 0;
+  }
+
+  async function countMediaAssets() {
+    const result = await db.query(
+      `
+        select count(*)::int as count
+        from media_assets
+      `
+    );
+
+    return result.rows[0] ? result.rows[0].count : 0;
+  }
+
+  async function updatePage(slug, input) {
+    const result = await db.query(
+      `
+        update pages
+        set title = $2,
+            meta_description = $3,
+            og_title = $4,
+            og_description = $5,
+            canonical_path = $6,
+            header_eyebrow = $7,
+            header_title = $8,
+            header_lede = $9,
+            is_published = $10,
+            updated_at = now()
+        where slug = $1
+        returning *
+      `,
+      [
+        slug,
+        input.title,
+        input.metaDescription,
+        input.ogTitle,
+        input.ogDescription,
+        input.canonicalPath,
+        input.headerEyebrow,
+        input.headerTitle,
+        input.headerLede,
+        input.isPublished !== false
+      ]
+    );
+
+    return mapPage(result.rows[0]);
+  }
+
+  async function updateBlock(slug, blockKey, input) {
+    const result = await db.query(
+      `
+        update content_blocks
+        set eyebrow = $3,
+            title = $4,
+            lede = $5,
+            body = $6,
+            is_enabled = $7,
+            updated_at = now()
+        where page_id = (
+          select id
+          from pages
+          where slug = $1
+          limit 1
+        )
+          and block_key = $2
+        returning *
+      `,
+      [
+        slug,
+        blockKey,
+        input.eyebrow || null,
+        input.title || null,
+        input.lede || null,
+        input.body || null,
+        input.isEnabled !== false
+      ]
+    );
+
+    return mapBlock(result.rows[0]);
+  }
+
   async function getPageWithBlocks(slug) {
     const page = await getPageBySlug(slug);
 
@@ -320,6 +447,152 @@ function createContentRepository(db = pool) {
     };
   }
 
+  async function getBlockItem(slug, blockKey, itemId) {
+    const result = await db.query(
+      `
+        select content_items.*
+        from content_items
+        join content_blocks on content_blocks.id = content_items.block_id
+        join pages on pages.id = content_blocks.page_id
+        where pages.slug = $1
+          and content_blocks.block_key = $2
+          and (content_items.id::text = $3 or content_items.item_key = $3)
+        limit 1
+      `,
+      [slug, blockKey, itemId]
+    );
+
+    return mapItem(result.rows[0]);
+  }
+
+  async function createBlockItem(slug, blockKey, input) {
+    const result = await db.query(
+      `
+        insert into content_items (
+          block_id,
+          item_key,
+          title,
+          subtitle,
+          body,
+          link_label,
+          link_url,
+          price,
+          badge,
+          metadata,
+          sort_order,
+          is_featured,
+          is_enabled
+        )
+        values (
+          (
+            select content_blocks.id
+            from content_blocks
+            join pages on pages.id = content_blocks.page_id
+            where pages.slug = $1
+              and content_blocks.block_key = $2
+            limit 1
+          ),
+          $3,
+          $4,
+          $5,
+          $6,
+          $7,
+          $8,
+          $9,
+          $10,
+          $11::jsonb,
+          $12,
+          $13,
+          $14
+        )
+        returning *
+      `,
+      [
+        slug,
+        blockKey,
+        input.itemKey || null,
+        input.title || null,
+        input.subtitle || null,
+        input.body || null,
+        input.linkLabel || null,
+        input.linkUrl || null,
+        input.price || null,
+        input.badge || null,
+        jsonValue(input.metadata),
+        integerValue(input.sortOrder),
+        input.isFeatured === true,
+        input.isEnabled !== false
+      ]
+    );
+
+    return mapItem(result.rows[0]);
+  }
+
+  async function updateBlockItem(slug, blockKey, itemId, input) {
+    const result = await db.query(
+      `
+        update content_items
+        set title = $4,
+            subtitle = $5,
+            body = $6,
+            link_label = $7,
+            link_url = $8,
+            price = $9,
+            badge = $10,
+            metadata = $11::jsonb,
+            sort_order = $12,
+            is_featured = $13,
+            is_enabled = $14,
+            updated_at = now()
+        from content_blocks, pages
+        where content_items.block_id = content_blocks.id
+          and content_blocks.page_id = pages.id
+          and pages.slug = $1
+          and content_blocks.block_key = $2
+          and (content_items.id::text = $3 or content_items.item_key = $3)
+        returning content_items.*
+      `,
+      [
+        slug,
+        blockKey,
+        itemId,
+        input.title || null,
+        input.subtitle || null,
+        input.body || null,
+        input.linkLabel || null,
+        input.linkUrl || null,
+        input.price || null,
+        input.badge || null,
+        jsonValue(input.metadata),
+        integerValue(input.sortOrder),
+        input.isFeatured === true,
+        input.isEnabled !== false
+      ]
+    );
+
+    return mapItem(result.rows[0]);
+  }
+
+  async function disableBlockItem(slug, blockKey, itemId) {
+    const result = await db.query(
+      `
+        update content_items
+        set is_enabled = false,
+            updated_at = now()
+        from content_blocks, pages
+        where content_items.block_id = content_blocks.id
+          and content_blocks.page_id = pages.id
+          and pages.slug = $1
+          and content_blocks.block_key = $2
+          and (content_items.id::text = $3 or content_items.item_key = $3)
+        returning content_items.*
+      `,
+      [slug, blockKey, itemId]
+    );
+
+    return mapItem(result.rows[0]);
+  }
+
   async function getSiteSettings() {
     const result = await db.query(
       `
@@ -336,12 +609,22 @@ function createContentRepository(db = pool) {
   }
 
   return {
+    withTransaction,
     upsertSiteSetting,
     upsertPage,
     upsertBlock,
     upsertItem,
     getPageBySlug,
+    listPages,
+    countPages,
+    countMediaAssets,
+    updatePage,
+    updateBlock,
     getPageWithBlocks,
+    getBlockItem,
+    createBlockItem,
+    updateBlockItem,
+    disableBlockItem,
     getSiteSettings
   };
 }

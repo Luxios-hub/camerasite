@@ -1,0 +1,120 @@
+<main class="admin-page">
+  <div class="admin-page__head">
+    <div>
+      <p class="admin-kicker">CamerasNYC</p>
+      <h1>Admin dashboard</h1>
+      <p class="admin-muted">Signed in as <strong><%= adminUser.displayName %></strong>.</p>
+    </div>
+    <form method="post" action="/admin/logout" class="admin-actions">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button type="submit" class="admin-button--ghost">Sign out</button>
+    </form>
+  </div>
+
+  <section class="admin-grid admin-grid--metrics" aria-label="Admin summary">
+    <div class="metric">
+      <p class="metric__label">Pages</p>
+      <p class="metric__value"><%= dashboard.pageCount == null ? 'N/A' : dashboard.pageCount %></p>
+    </div>
+    <div class="metric">
+      <p class="metric__label">Media</p>
+      <p class="metric__value"><%= dashboard.mediaCount == null ? 'N/A' : dashboard.mediaCount %></p>
+    </div>
+    <% for (const leadCount of dashboard.leadCounts.slice(0, 2)) { %>
+      <div class="metric">
+        <p class="metric__label"><%= leadCount.status %></p>
+        <p class="metric__value"><%= leadCount.count %></p>
+      </div>
+    <% } %>
+  </section>
+
+  <div class="admin-grid admin-grid--two admin-section-gap">
+    <section class="admin-panel">
+      <div class="admin-panel__head">
+        <h2>Lead counts by status</h2>
+      </div>
+      <div class="admin-panel__body">
+        <table class="admin-table">
+          <tbody>
+            <% for (const leadCount of dashboard.leadCounts) { %>
+              <tr>
+                <th><%= leadCount.status %></th>
+                <td><%= leadCount.count %></td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="admin-panel">
+      <div class="admin-panel__head">
+        <h2>Quick links</h2>
+      </div>
+      <div class="admin-panel__body admin-actions">
+        <a class="admin-button" href="/admin/settings">Edit settings</a>
+        <a class="admin-button admin-button--ghost" href="/admin/pages">Edit pages</a>
+      </div>
+    </section>
+  </div>
+
+  <div class="admin-grid admin-grid--two">
+    <section class="admin-panel">
+      <div class="admin-panel__head">
+        <h2>Last five leads</h2>
+      </div>
+      <div class="admin-panel__body">
+        <% if (dashboard.recentLeads.length === 0) { %>
+          <p class="admin-muted">No lead repository data available.</p>
+        <% } else { %>
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Status</th>
+                <th>Contact</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% for (const lead of dashboard.recentLeads) { %>
+                <tr>
+                  <td><%= lead.name %></td>
+                  <td><%= lead.status %></td>
+                  <td><%= lead.email || lead.phone || '' %></td>
+                </tr>
+              <% } %>
+            </tbody>
+          </table>
+        <% } %>
+      </div>
+    </section>
+
+    <section class="admin-panel">
+      <div class="admin-panel__head">
+        <h2>Last five audit events</h2>
+      </div>
+      <div class="admin-panel__body">
+        <% if (dashboard.auditEvents.length === 0) { %>
+          <p class="admin-muted">No audit repository data available.</p>
+        <% } else { %>
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Action</th>
+                <th>Summary</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% for (const event of dashboard.auditEvents) { %>
+                <tr>
+                  <td><%= event.action %></td>
+                  <td><%= event.summary %></td>
+                </tr>
+              <% } %>
+            </tbody>
+          </table>
+        <% } %>
+      </div>
+    </section>
+  </div>
+</main>

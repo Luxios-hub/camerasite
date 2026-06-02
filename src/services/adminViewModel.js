@@ -54,6 +54,20 @@ function integerValue(value, fallback = 0) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+function nullableMediaId(value) {
+  const trimmed = trimmedValue(value);
+
+  if (!trimmed) {
+    return null;
+  }
+
+  return /^[A-Za-z0-9_-]{1,128}$/.test(trimmed) ? trimmed : '__invalid_media_id__';
+}
+
+function isInvalidMediaId(value) {
+  return value === '__invalid_media_id__';
+}
+
 function splitLines(value) {
   return stringValue(value)
     .split(/\r?\n/)
@@ -226,6 +240,7 @@ function pageFormFromPage(page) {
     metaDescription: page.metaDescription || '',
     ogTitle: page.ogTitle || '',
     ogDescription: page.ogDescription || '',
+    ogImageMediaId: page.ogImageMediaId || '',
     canonicalPath: page.canonicalPath || page.path || '',
     headerEyebrow: page.headerEyebrow || '',
     headerTitle: page.headerTitle || '',
@@ -240,6 +255,7 @@ function pageInputFromBody(body = {}) {
     metaDescription: trimmedValue(body.metaDescription),
     ogTitle: trimmedValue(body.ogTitle),
     ogDescription: trimmedValue(body.ogDescription),
+    ogImageMediaId: nullableMediaId(body.ogImageMediaId),
     canonicalPath: trimmedValue(body.canonicalPath),
     headerEyebrow: trimmedValue(body.headerEyebrow),
     headerTitle: trimmedValue(body.headerTitle),
@@ -299,6 +315,17 @@ function sanitizeCanonicalPath(value) {
 }
 
 function validatePageInput(input) {
+  if (isInvalidMediaId(input.ogImageMediaId)) {
+    return {
+      ok: false,
+      error: 'Select a valid media asset.',
+      form: {
+        ...input,
+        ogImageMediaId: ''
+      }
+    };
+  }
+
   const canonical = sanitizeCanonicalPath(input.canonicalPath);
 
   if (!canonical.ok) {
@@ -313,6 +340,7 @@ function validatePageInput(input) {
     ok: true,
     input: {
       ...input,
+      ogImageMediaId: input.ogImageMediaId || null,
       canonicalPath: canonical.value
     }
   };
@@ -377,6 +405,7 @@ function itemFormFromItem(item = {}) {
     badge: item.badge || '',
     linkLabel: item.linkLabel || '',
     linkUrl: item.linkUrl || '',
+    imageMediaId: item.imageMediaId || '',
     sortOrder: String(item.sortOrder ?? 0),
     isFeatured: item.isFeatured === true,
     isEnabled: item.isEnabled !== false,
@@ -444,6 +473,22 @@ function validateMetadataShape(metadata) {
 }
 
 function itemInputFromBody(body = {}) {
+  const imageMediaId = nullableMediaId(body.imageMediaId);
+
+  if (isInvalidMediaId(imageMediaId)) {
+    return {
+      ok: false,
+      error: 'Select a valid media asset.',
+      form: {
+        ...itemFormFromItem(body),
+        imageMediaId: '',
+        isFeatured: checkboxValue(body.isFeatured),
+        isEnabled: checkboxValue(body.isEnabled),
+        metadata: stringValue(body.metadata)
+      }
+    };
+  }
+
   const metadata = parseMetadataJson(body.metadata);
 
   if (!metadata.ok) {
@@ -452,6 +497,7 @@ function itemInputFromBody(body = {}) {
       error: metadata.error,
       form: {
         ...itemFormFromItem(body),
+        imageMediaId,
         isFeatured: checkboxValue(body.isFeatured),
         isEnabled: checkboxValue(body.isEnabled),
         metadata: stringValue(body.metadata)
@@ -466,6 +512,7 @@ function itemInputFromBody(body = {}) {
       error: metadataShape.error,
       form: {
         ...itemFormFromItem(body),
+        imageMediaId,
         isFeatured: checkboxValue(body.isFeatured),
         isEnabled: checkboxValue(body.isEnabled),
         metadata: stringValue(body.metadata)
@@ -483,6 +530,7 @@ function itemInputFromBody(body = {}) {
       badge: nullableText(body.badge),
       linkLabel: nullableText(body.linkLabel),
       linkUrl: nullableText(body.linkUrl),
+      imageMediaId,
       sortOrder: integerValue(body.sortOrder),
       isFeatured: checkboxValue(body.isFeatured),
       isEnabled: checkboxValue(body.isEnabled),

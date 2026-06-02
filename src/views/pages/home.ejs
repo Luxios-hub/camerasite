@@ -24,7 +24,7 @@
       </div>
       <% const heroMedia = safeUrl(mediaUrl(hero), null); %>
       <% if (heroMedia) { %>
-        <img class="hero__visual" src="<%= heroMedia %>" alt="<%= hero.title %>" />
+        <img class="hero__visual" src="<%= heroMedia %>" alt="<%= mediaAlt(hero, hero.title) %>" />
       <% } else { %>
         <div class="hero__visual photo-ph <%= heroSettings.placeholderClass || 'photo-ph--dusk' %>" data-img-placeholder="<%= heroSettings.imagePlaceholder || heroSettings.imageSlot || 'hero' %>">
           <% if (heroSettings.imageCaption) { %>
@@ -56,7 +56,7 @@
           <a class="track-card" href="<%= safeUrl(item.linkUrl) %>">
             <% const itemMedia = safeUrl(mediaUrl(item), null); %>
             <% if (itemMedia) { %>
-              <img class="track-card__media" src="<%= itemMedia %>" alt="<%= item.title %>" />
+              <img class="track-card__media" src="<%= itemMedia %>" alt="<%= mediaAlt(item, item.title) %>" />
             <% } else { %>
               <div class="track-card__media photo-ph <%= itemMeta.placeholderClass || 'photo-ph--porch' %>" data-img-placeholder="<%= itemMeta.imagePlaceholder || itemMeta.imageSlot || item.itemKey %>">
                 <% if (itemMeta.audience) { %><span class="photo-ph__tag"><%= itemMeta.audience %></span><% } %>
@@ -107,7 +107,7 @@
       <div class="two-track">
         <% const whyMedia = safeUrl(mediaUrl(whyLocal), null); %>
         <% if (whyMedia) { %>
-          <img class="photo-ph" src="<%= whyMedia %>" alt="<%= whyLocal.title %>" style="aspect-ratio: 4/5; border-radius: var(--radius-lg);" />
+          <img class="photo-ph" src="<%= whyMedia %>" alt="<%= mediaAlt(whyLocal, whyLocal.title) %>" style="aspect-ratio: 4/5; border-radius: var(--radius-lg);" />
         <% } else { %>
           <div class="photo-ph <%= whySettings.placeholderClass || 'photo-ph--interior' %>" data-img-placeholder="<%= whySettings.imagePlaceholder || whySettings.imageSlot || 'local-installer-photo' %>" style="aspect-ratio: 4/5; border-radius: var(--radius-lg);">
             <% if (whySettings.imageTag) { %><span class="photo-ph__tag"><%= whySettings.imageTag %></span><% } %>
@@ -206,7 +206,7 @@
           <article class="install-card">
             <% const recentMedia = safeUrl(mediaUrl(item), null); %>
             <% if (recentMedia) { %>
-              <img class="install-card__media" src="<%= recentMedia %>" alt="<%= item.title %>" />
+              <img class="install-card__media" src="<%= recentMedia %>" alt="<%= mediaAlt(item, item.title) %>" />
             <% } else { %>
               <div class="install-card__media photo-ph <%= itemMeta.placeholderClass || 'photo-ph--brick' %>" data-img-placeholder="<%= itemMeta.imagePlaceholder || itemMeta.imageSlot || item.itemKey %>"></div>
             <% } %>

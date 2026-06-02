@@ -58,6 +58,17 @@
           <label for="linkUrl">Link URL</label>
           <input id="linkUrl" name="linkUrl" value="<%= form.linkUrl %>">
         </div>
+        <div class="admin-field admin-field--full">
+          <label for="imageMediaId">Image</label>
+          <select id="imageMediaId" name="imageMediaId">
+            <option value="">Use fallback placeholder</option>
+            <% for (const asset of mediaAssets || []) { %>
+              <option value="<%= asset.id %>" <%= String(form.imageMediaId || '') === String(asset.id) ? 'selected' : '' %>>
+                <%= asset.altText || asset.originalName %>
+              </option>
+            <% } %>
+          </select>
+        </div>
         <label class="admin-check">
           <input type="checkbox" name="isFeatured" value="on" <%= form.isFeatured ? 'checked' : '' %>>
           Featured

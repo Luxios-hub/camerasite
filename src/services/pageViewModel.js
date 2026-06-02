@@ -86,6 +86,23 @@ function mediaUrl(itemOrPage) {
   ]);
 }
 
+function mediaAlt(itemOrPage, fallback = '') {
+  if (!itemOrPage) {
+    return fallback;
+  }
+
+  return firstPublicPath([
+    itemOrPage.altText,
+    itemOrPage.media && itemOrPage.media.altText,
+    itemOrPage.image && itemOrPage.image.altText,
+    itemOrPage.imageMedia && itemOrPage.imageMedia.altText,
+    itemOrPage.ogImage && itemOrPage.ogImage.altText,
+    itemOrPage.ogImageMedia && itemOrPage.ogImageMedia.altText,
+    itemOrPage.metadata && itemOrPage.metadata.altText,
+    itemOrPage.settings && itemOrPage.settings.altText
+  ]) || fallback;
+}
+
 function joinUrl(baseUrl, pathOrUrl) {
   if (!pathOrUrl) {
     return baseUrl;
@@ -227,10 +244,12 @@ function finalizeViewModel({ settings, page, content }) {
     helpers: {
       items: itemHelper,
       mediaUrl,
+      mediaAlt,
       ...renderHelpers
     },
     items: itemHelper,
     mediaUrl,
+    mediaAlt,
     ...renderHelpers
   };
 }
@@ -238,5 +257,6 @@ function finalizeViewModel({ settings, page, content }) {
 module.exports = {
   buildPageViewModel,
   createSeedRepository,
+  mediaAlt,
   mediaUrl
 };

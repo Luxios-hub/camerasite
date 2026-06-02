@@ -224,6 +224,49 @@ a:hover {
   border-bottom: 0;
 }
 
+.admin-media-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
+
+.admin-media-card {
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.admin-media-card__image {
+  aspect-ratio: 4 / 3;
+  background: var(--admin-surface-soft);
+  display: block;
+  object-fit: cover;
+  width: 100%;
+}
+
+.admin-media-card__body {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+}
+
+.admin-media-card__body h3,
+.admin-media-card__body p {
+  margin: 0;
+}
+
+.admin-media-card code {
+  background: var(--admin-surface-soft);
+  border: 1px solid var(--admin-line);
+  border-radius: 6px;
+  color: var(--admin-muted);
+  display: block;
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+  padding: 6px 8px;
+}
+
 .admin-block-editor {
   border-top: 1px solid var(--admin-line);
   padding: 16px 0;

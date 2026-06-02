@@ -197,7 +197,7 @@
             <article class="case-card">
               <% const caseMedia = safeUrl(mediaUrl(item), null); %>
               <% if (caseMedia) { %>
-                <img class="case-card__media" src="<%= caseMedia %>" alt="<%= item.title %>" />
+                <img class="case-card__media" src="<%= caseMedia %>" alt="<%= mediaAlt(item, item.title) %>" />
               <% } else { %>
                 <div class="case-card__media photo-ph <%= itemMeta.placeholderClass || 'photo-ph--storefront' %>" data-img-placeholder="<%= itemMeta.imagePlaceholder || itemMeta.imageSlot || item.itemKey %>">
                   <% if (itemMeta.tag) { %><span class="photo-ph__tag"><%= itemMeta.tag %></span><% } %>
@@ -237,7 +237,7 @@
         <div class="contact-layout">
           <% const founderMedia = safeUrl(mediaUrl(block), null); %>
           <% if (founderMedia) { %>
-            <img class="photo-ph" src="<%= founderMedia %>" alt="<%= block.title %>" style="aspect-ratio: 4/5; border-radius: var(--radius-lg); box-shadow: var(--shadow-card);" />
+            <img class="photo-ph" src="<%= founderMedia %>" alt="<%= mediaAlt(block, block.title) %>" style="aspect-ratio: 4/5; border-radius: var(--radius-lg); box-shadow: var(--shadow-card);" />
           <% } else { %>
             <div class="photo-ph <%= founderSettings.placeholderClass || 'photo-ph--interior' %>" data-img-placeholder="<%= founderSettings.imagePlaceholder || founderSettings.imageSlot || 'founder-photo' %>" style="aspect-ratio: 4/5; border-radius: var(--radius-lg); box-shadow: var(--shadow-card);">
               <% if (founderSettings.imageTag) { %><span class="photo-ph__tag"><%= founderSettings.imageTag %></span><% } %>

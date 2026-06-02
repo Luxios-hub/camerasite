@@ -46,6 +46,17 @@
           <label for="ogDescription">Open Graph description</label>
           <textarea id="ogDescription" name="ogDescription" required><%= form.ogDescription %></textarea>
         </div>
+        <div class="admin-field admin-field--full">
+          <label for="ogImageMediaId">Open Graph image</label>
+          <select id="ogImageMediaId" name="ogImageMediaId">
+            <option value="">Use default social image</option>
+            <% for (const asset of mediaAssets || []) { %>
+              <option value="<%= asset.id %>" <%= String(form.ogImageMediaId || '') === String(asset.id) ? 'selected' : '' %>>
+                <%= asset.altText || asset.originalName %>
+              </option>
+            <% } %>
+          </select>
+        </div>
         <div class="admin-field">
           <label for="headerEyebrow">Header eyebrow</label>
           <input id="headerEyebrow" name="headerEyebrow" value="<%= form.headerEyebrow %>">

@@ -1,9 +1,16 @@
 const express = require('express');
 const rateLimit = require('express-rate-limit');
+const multer = require('multer');
 const { createAdminRepository } = require('../repositories/adminRepository');
 const { createAuditRepository } = require('../repositories/auditRepository');
 const { createContentRepository } = require('../repositories/contentRepository');
 const { createLeadRepository } = require('../repositories/leadRepository');
+const { createMediaRepository } = require('../repositories/mediaRepository');
+const {
+  MAX_IMAGE_BYTES,
+  MediaValidationError,
+  createMediaStorage
+} = require('../services/mediaStorage');
 const passwordHelpers = require('../services/passwords');
 const {
   blockUpdatesFromBody,
@@ -137,12 +144,47 @@ function resolveLeadRepository(options = {}) {
   return null;
 }
 
+function resolveMediaRepository(options = {}) {
+  if (options.mediaRepository) {
+    return options.mediaRepository;
+  }
+
+  if (options.mediaDb) {
+    return createMediaRepository(options.mediaDb);
+  }
+
+  if (hasExplicitDatabaseUrl()) {
+    return createMediaRepository(options.db);
+  }
+
+  return null;
+}
+
+function resolveMediaStorage(options = {}) {
+  if (options.mediaStorage) {
+    return options.mediaStorage;
+  }
+
+  return createMediaStorage({
+    root: options.uploadRoot
+  });
+}
+
 function ensureContentRepository(contentRepository, res) {
   if (contentRepository) {
     return true;
   }
 
   res.status(503).send('Content repository is unavailable.');
+  return false;
+}
+
+function ensureMediaRepository(mediaRepository, res) {
+  if (mediaRepository) {
+    return true;
+  }
+
+  res.status(503).send('Media repository is unavailable.');
   return false;
 }
 
@@ -171,17 +213,79 @@ async function runContentTransaction(contentRepository, auditRepository, callbac
   return callback(contentRepository, auditRepository);
 }
 
+async function runMediaTransaction(mediaRepository, auditRepository, callback) {
+  if (mediaRepository && typeof mediaRepository.withTransaction === 'function') {
+    return mediaRepository.withTransaction((transactionMediaRepository, transactionClient) => {
+      const transactionAuditRepository = transactionClient
+        ? createAuditRepository(transactionClient)
+        : auditRepository;
+
+      return callback(transactionMediaRepository, transactionAuditRepository);
+    });
+  }
+
+  return callback(mediaRepository, auditRepository);
+}
+
+class MediaAssetInUseError extends Error {
+  constructor(message = 'Media asset is currently assigned and cannot be deleted.') {
+    super(message);
+    this.name = 'MediaAssetInUseError';
+    this.statusCode = 409;
+  }
+}
+
+async function listMediaAssetsForForm(mediaRepository) {
+  if (!mediaRepository || typeof mediaRepository.listMediaAssets !== 'function') {
+    return [];
+  }
+
+  return mediaRepository.listMediaAssets({ limit: 500 });
+}
+
 function createAdminRouter(options = {}) {
   const router = express.Router();
   const adminRepository = options.adminRepository || createAdminRepository(options.db);
   const auditRepository = options.auditRepository || createAuditRepository(options.db);
   const contentRepository = resolveContentRepository(options);
   const leadRepository = resolveLeadRepository(options);
-  const mediaRepository = options.mediaRepository || contentRepository;
+  const mediaRepository = resolveMediaRepository(options);
+  const dashboardMediaRepository = mediaRepository || contentRepository;
+  const mediaStorage = resolveMediaStorage(options);
   const verifyPassword = (options.passwordService && options.passwordService.verifyPassword)
     || passwordHelpers.verifyPassword;
   const loginRateLimiter = resolveLoginRateLimiter(options);
   const requireAdmin = createRequireAdmin(adminRepository);
+  const uploadMedia = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+      fileSize: MAX_IMAGE_BYTES + 1,
+      files: 1
+    }
+  }).single('image');
+
+  function parseMediaUpload(req, res, next) {
+    uploadMedia(req, res, (error) => {
+      req.mediaUploadError = error || null;
+      next();
+    });
+  }
+
+  async function renderMediaPage(req, res, locals = {}, statusCode = 200) {
+    const assets = mediaRepository && typeof mediaRepository.listMediaAssets === 'function'
+      ? await mediaRepository.listMediaAssets({ limit: 100 })
+      : [];
+
+    await renderAdminView(req, res, 'admin/media', {
+      title: 'Media Library',
+      csrfToken: res.locals.csrfToken,
+      assets,
+      uploaded: req.query.uploaded === '1',
+      deleted: req.query.deleted === '1',
+      error: null,
+      ...locals
+    }, statusCode);
+  }
 
   router.get('/login', attachCsrfToken, async (req, res, next) => {
     try {
@@ -252,7 +356,7 @@ function createAdminRouter(options = {}) {
       const dashboard = await buildDashboardViewModel({
         contentRepository,
         leadRepository,
-        mediaRepository,
+        mediaRepository: dashboardMediaRepository,
         auditRepository
       });
 
@@ -262,6 +366,128 @@ function createAdminRouter(options = {}) {
         dashboard
       });
     } catch (error) {
+      next(error);
+    }
+  });
+
+  router.get('/media', async (req, res, next) => {
+    try {
+      if (!ensureMediaRepository(mediaRepository, res)) {
+        return;
+      }
+
+      await renderMediaPage(req, res);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post('/media', parseMediaUpload, verifyCsrfToken, async (req, res, next) => {
+    let storedMedia = null;
+    let createdAsset = null;
+
+    try {
+      if (!ensureMediaRepository(mediaRepository, res)) {
+        return;
+      }
+
+      if (req.mediaUploadError) {
+        const message = req.mediaUploadError.code === 'LIMIT_FILE_SIZE'
+          ? 'Uploaded image must be 8MB or smaller.'
+          : 'Image upload failed.';
+        await renderMediaPage(req, res, { error: message }, 400);
+        return;
+      }
+
+      storedMedia = await mediaStorage.storeMediaFile(req.file, {
+        altText: req.body && req.body.altText,
+        caption: req.body && req.body.caption
+      });
+
+      await runMediaTransaction(mediaRepository, auditRepository, async (transactionMediaRepository, transactionAuditRepository) => {
+        createdAsset = await transactionMediaRepository.createMediaAsset(storedMedia);
+
+        await logAudit(transactionAuditRepository, req.adminUser, {
+          action: 'admin.media.create',
+          entityType: 'media_asset',
+          entityId: createdAsset && createdAsset.id,
+          summary: `Uploaded media ${createdAsset ? createdAsset.originalName : storedMedia.originalName}.`
+        });
+      });
+
+      res.redirect('/admin/media?uploaded=1');
+    } catch (error) {
+      if (createdAsset && mediaRepository && typeof mediaRepository.deleteMediaAsset === 'function') {
+        await mediaRepository.deleteMediaAsset(createdAsset.id).catch(() => {});
+      }
+
+      if (storedMedia && mediaStorage && typeof mediaStorage.deleteMediaFile === 'function') {
+        await mediaStorage.deleteMediaFile(storedMedia).catch(() => {});
+      }
+
+      if (error instanceof MediaValidationError) {
+        await renderMediaPage(req, res, { error: error.message }, error.statusCode || 400);
+        return;
+      }
+
+      next(error);
+    }
+  });
+
+  router.post('/media/:id/delete', verifyCsrfToken, async (req, res, next) => {
+    try {
+      if (!ensureMediaRepository(mediaRepository, res)) {
+        return;
+      }
+
+      const deletedAsset = await runMediaTransaction(mediaRepository, auditRepository, async (transactionMediaRepository, transactionAuditRepository) => {
+        const transactionAsset = await transactionMediaRepository.getMediaAsset(req.params.id);
+        if (!transactionAsset) {
+          return null;
+        }
+
+        if (await transactionMediaRepository.isMediaAssetUsed(req.params.id)) {
+          throw new MediaAssetInUseError();
+        }
+
+        const deleted = await transactionMediaRepository.deleteUnusedMediaAsset(req.params.id);
+        if (!deleted) {
+          throw new MediaAssetInUseError();
+        }
+
+        await logAudit(transactionAuditRepository, req.adminUser, {
+          action: 'admin.media.delete',
+          entityType: 'media_asset',
+          entityId: deleted.id,
+          summary: `Deleted media ${deleted.originalName}.`
+        });
+
+        return deleted;
+      });
+
+      if (!deletedAsset) {
+        res.status(404).send('Media asset not found.');
+        return;
+      }
+
+      if (mediaStorage && typeof mediaStorage.deleteMediaFile === 'function') {
+        try {
+          await mediaStorage.deleteMediaFile(deletedAsset);
+        } catch (error) {
+          await renderMediaPage(req, res, {
+            error: 'Media metadata was deleted, but the file could not be removed. Please retry file cleanup.'
+          }, 500);
+          return;
+        }
+      }
+
+      res.redirect('/admin/media?deleted=1');
+    } catch (error) {
+      if (error instanceof MediaAssetInUseError) {
+        await renderMediaPage(req, res, { error: error.message }, error.statusCode);
+        return;
+      }
+
       next(error);
     }
   });
@@ -347,6 +573,7 @@ function createAdminRouter(options = {}) {
         csrfToken: res.locals.csrfToken,
         page,
         form: pageFormFromPage(page),
+        mediaAssets: await listMediaAssetsForForm(mediaRepository),
         saved: req.query.saved === '1',
         error: null
       });
@@ -374,6 +601,7 @@ function createAdminRouter(options = {}) {
           csrfToken: res.locals.csrfToken,
           page,
           form: pageValidation.form,
+          mediaAssets: await listMediaAssetsForForm(mediaRepository),
           saved: false,
           error: pageValidation.error
         }, 400);
@@ -422,6 +650,7 @@ function createAdminRouter(options = {}) {
         block,
         item: null,
         form: itemFormFromItem({ sortOrder: (block.items || []).length * 10 + 10 }),
+        mediaAssets: await listMediaAssetsForForm(mediaRepository),
         mode: 'new',
         error: null
       });
@@ -452,6 +681,7 @@ function createAdminRouter(options = {}) {
           block,
           item: null,
           form: parsed.form,
+          mediaAssets: await listMediaAssetsForForm(mediaRepository),
           mode: 'new',
           error: parsed.error
         }, 400);
@@ -501,6 +731,7 @@ function createAdminRouter(options = {}) {
         block,
         item,
         form: itemFormFromItem(item),
+        mediaAssets: await listMediaAssetsForForm(mediaRepository),
         mode: 'edit',
         error: null
       });
@@ -535,6 +766,7 @@ function createAdminRouter(options = {}) {
           block,
           item,
           form: parsed.form,
+          mediaAssets: await listMediaAssetsForForm(mediaRepository),
           mode: 'edit',
           error: parsed.error
         }, 400);

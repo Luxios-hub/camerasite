@@ -1,0 +1,83 @@
+<main class="admin-page">
+  <div class="admin-page__head">
+    <div>
+      <p class="admin-kicker">Media library</p>
+      <h1>Images</h1>
+      <p class="admin-muted">Upload JPG, PNG, or WebP files for page and item image slots.</p>
+    </div>
+  </div>
+
+  <% if (uploaded) { %>
+    <p class="admin-status" role="status">Image uploaded.</p>
+  <% } %>
+  <% if (deleted) { %>
+    <p class="admin-status" role="status">Image deleted.</p>
+  <% } %>
+  <% if (error) { %>
+    <p class="admin-error" role="alert"><%= error %></p>
+  <% } %>
+
+  <section class="admin-panel">
+    <div class="admin-panel__head">
+      <h2>Upload image</h2>
+    </div>
+    <div class="admin-panel__body">
+      <form method="post" action="/admin/media" enctype="multipart/form-data" class="admin-form">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="admin-form__grid">
+          <div class="admin-field">
+            <label for="image">Image file</label>
+            <input id="image" name="image" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" required>
+          </div>
+          <div class="admin-field">
+            <label for="altText">Alt text</label>
+            <input id="altText" name="altText" required maxlength="240">
+          </div>
+          <div class="admin-field admin-field--full">
+            <label for="caption">Caption</label>
+            <input id="caption" name="caption" maxlength="300">
+          </div>
+        </div>
+        <div class="admin-actions">
+          <button type="submit">Upload image</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <section class="admin-panel">
+    <div class="admin-panel__head">
+      <h2>Uploaded images</h2>
+    </div>
+    <div class="admin-panel__body">
+      <% if (!assets || assets.length === 0) { %>
+        <p class="admin-muted">No images uploaded yet.</p>
+      <% } else { %>
+        <div class="admin-media-grid">
+          <% for (const asset of assets) { %>
+            <% const safePath = typeof asset.publicPath === 'string' && /^\/uploads\/media\/[A-Za-z0-9/_-]+\.(?:jpg|jpeg|png|webp)$/i.test(asset.publicPath) ? asset.publicPath : ''; %>
+            <article class="admin-media-card">
+              <% if (safePath) { %>
+                <img class="admin-media-card__image" src="<%= safePath %>" alt="<%= asset.altText %>">
+              <% } %>
+              <div class="admin-media-card__body">
+                <h3><%= asset.originalName %></h3>
+                <p class="admin-muted"><%= asset.mimeType %> · <%= asset.sizeBytes %> bytes</p>
+                <% if (asset.width && asset.height) { %>
+                  <p class="admin-muted"><%= asset.width %> × <%= asset.height %></p>
+                <% } %>
+                <p><%= asset.altText %></p>
+                <% if (asset.caption) { %><p class="admin-muted"><%= asset.caption %></p><% } %>
+                <code><%= asset.publicPath %></code>
+                <form method="post" action="/admin/media/<%= encodeURIComponent(asset.id) %>/delete" class="admin-actions admin-section-gap">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button type="submit" class="admin-button--danger">Delete</button>
+                </form>
+              </div>
+            </article>
+          <% } %>
+        </div>
+      <% } %>
+    </div>
+  </section>
+</main>

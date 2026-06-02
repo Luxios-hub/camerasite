@@ -1,4 +1,5 @@
 const { pool } = require('../db/pool');
+const { mapMediaAsset } = require('./mediaRepository');
 
 function jsonValue(value) {
   return value || {};
@@ -85,6 +86,35 @@ function mapItem(row) {
   };
 }
 
+function attachPageMedia(page, mediaById) {
+  const media = page.ogImageMediaId ? mediaById.get(String(page.ogImageMediaId)) : null;
+
+  if (!media) {
+    return page;
+  }
+
+  return {
+    ...page,
+    ogImage: media,
+    ogImageMedia: media
+  };
+}
+
+function attachItemMedia(item, mediaById) {
+  const media = item.imageMediaId ? mediaById.get(String(item.imageMediaId)) : null;
+
+  if (!media) {
+    return item;
+  }
+
+  return {
+    ...item,
+    media,
+    image: media,
+    imageMedia: media
+  };
+}
+
 function createContentRepository(db = pool) {
   async function withTransaction(callback) {
     if (typeof db.connect !== 'function') {
@@ -133,6 +163,7 @@ function createContentRepository(db = pool) {
           meta_description,
           og_title,
           og_description,
+          og_image_media_id,
           canonical_path,
           header_eyebrow,
           header_title,
@@ -141,7 +172,7 @@ function createContentRepository(db = pool) {
           schema_data,
           is_published
         )
-        values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13::jsonb, $14)
+        values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14::jsonb, $15)
         on conflict (slug) do update set
           template = excluded.template,
           path = excluded.path,
@@ -149,6 +180,7 @@ function createContentRepository(db = pool) {
           meta_description = excluded.meta_description,
           og_title = excluded.og_title,
           og_description = excluded.og_description,
+          og_image_media_id = excluded.og_image_media_id,
           canonical_path = excluded.canonical_path,
           header_eyebrow = excluded.header_eyebrow,
           header_title = excluded.header_title,
@@ -167,6 +199,7 @@ function createContentRepository(db = pool) {
         page.metaDescription,
         page.ogTitle,
         page.ogDescription,
+        page.ogImageMediaId || null,
         page.canonicalPath,
         page.headerEyebrow,
         page.headerTitle,
@@ -338,11 +371,12 @@ function createContentRepository(db = pool) {
             meta_description = $3,
             og_title = $4,
             og_description = $5,
-            canonical_path = $6,
-            header_eyebrow = $7,
-            header_title = $8,
-            header_lede = $9,
-            is_published = $10,
+            og_image_media_id = $6,
+            canonical_path = $7,
+            header_eyebrow = $8,
+            header_title = $9,
+            header_lede = $10,
+            is_published = $11,
             updated_at = now()
         where slug = $1
         returning *
@@ -353,6 +387,7 @@ function createContentRepository(db = pool) {
         input.metaDescription,
         input.ogTitle,
         input.ogDescription,
+        input.ogImageMediaId || null,
         input.canonicalPath,
         input.headerEyebrow,
         input.headerTitle,
@@ -429,17 +464,46 @@ function createContentRepository(db = pool) {
       `,
       [blockIds]
     );
+    const mappedItems = itemResult.rows.map(mapItem);
+    const mediaIds = new Set();
+
+    if (page.ogImageMediaId) {
+      mediaIds.add(String(page.ogImageMediaId));
+    }
+
+    for (const item of mappedItems) {
+      if (item.imageMediaId) {
+        mediaIds.add(String(item.imageMediaId));
+      }
+    }
+
+    const mediaById = new Map();
+    if (mediaIds.size > 0) {
+      const mediaResult = await db.query(
+        `
+          select *
+          from media_assets
+          where id = any($1::uuid[])
+        `,
+        [[...mediaIds]]
+      );
+
+      for (const row of mediaResult.rows) {
+        const asset = mapMediaAsset(row);
+        mediaById.set(String(asset.id), asset);
+      }
+    }
 
     const itemsByBlockId = new Map();
-    for (const row of itemResult.rows) {
-      const currentItem = mapItem(row);
+    for (const item of mappedItems) {
+      const currentItem = attachItemMedia(item, mediaById);
       const existing = itemsByBlockId.get(currentItem.blockId) || [];
       existing.push(currentItem);
       itemsByBlockId.set(currentItem.blockId, existing);
     }
 
     return {
-      ...page,
+      ...attachPageMedia(page, mediaById),
       blocks: blocks.map((currentBlock) => ({
         ...currentBlock,
         items: itemsByBlockId.get(currentBlock.id) || []
@@ -474,6 +538,7 @@ function createContentRepository(db = pool) {
           title,
           subtitle,
           body,
+          image_media_id,
           link_label,
           link_url,
           price,
@@ -500,10 +565,11 @@ function createContentRepository(db = pool) {
           $8,
           $9,
           $10,
-          $11::jsonb,
-          $12,
+          $11,
+          $12::jsonb,
           $13,
-          $14
+          $14,
+          $15
         )
         returning *
       `,
@@ -514,6 +580,7 @@ function createContentRepository(db = pool) {
         input.title || null,
         input.subtitle || null,
         input.body || null,
+        input.imageMediaId || null,
         input.linkLabel || null,
         input.linkUrl || null,
         input.price || null,
@@ -535,14 +602,15 @@ function createContentRepository(db = pool) {
         set title = $4,
             subtitle = $5,
             body = $6,
-            link_label = $7,
-            link_url = $8,
-            price = $9,
-            badge = $10,
-            metadata = $11::jsonb,
-            sort_order = $12,
-            is_featured = $13,
-            is_enabled = $14,
+            image_media_id = $7,
+            link_label = $8,
+            link_url = $9,
+            price = $10,
+            badge = $11,
+            metadata = $12::jsonb,
+            sort_order = $13,
+            is_featured = $14,
+            is_enabled = $15,
             updated_at = now()
         from content_blocks, pages
         where content_items.block_id = content_blocks.id
@@ -559,6 +627,7 @@ function createContentRepository(db = pool) {
         input.title || null,
         input.subtitle || null,
         input.body || null,
+        input.imageMediaId || null,
         input.linkLabel || null,
         input.linkUrl || null,
         input.price || null,

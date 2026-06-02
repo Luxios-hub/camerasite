@@ -277,11 +277,12 @@ test('content repository updates page and block editor fields', async () => {
           meta_description: params[2],
           og_title: params[3],
           og_description: params[4],
-          canonical_path: params[5],
-          header_eyebrow: params[6],
-          header_title: params[7],
-          header_lede: params[8],
-          is_published: params[9]
+          og_image_media_id: params[5],
+          canonical_path: params[6],
+          header_eyebrow: params[7],
+          header_title: params[8],
+          header_lede: params[9],
+          is_published: params[10]
         }]
       };
     }
@@ -308,6 +309,7 @@ test('content repository updates page and block editor fields', async () => {
     metaDescription: 'Meta test',
     ogTitle: 'OG test',
     ogDescription: 'OG desc test',
+    ogImageMediaId: 'media-og',
     canonicalPath: '/residential.html',
     headerEyebrow: 'Homes',
     headerTitle: 'Quiet cameras',
@@ -324,11 +326,13 @@ test('content repository updates page and block editor fields', async () => {
 
   assert.equal(page.isPublished, false);
   assert.equal(page.headerTitle, 'Quiet cameras');
+  assert.equal(page.ogImageMediaId, 'media-og');
   assert.equal(block.blockKey, 'page_header');
   assert.equal(block.title, 'Quiet cameras');
   assert.match(fakeDb.calls[0].sql, /where\s+slug\s*=\s*\$1/i);
+  assert.match(fakeDb.calls[0].sql, /og_image_media_id\s*=\s*\$6/i);
   assert.match(fakeDb.calls[1].sql, /where\s+page_id\s*=\s*\(/i);
-  assert.deepEqual(fakeDb.calls[0].params.slice(0, 3), ['residential', 'Residential Test', 'Meta test']);
+  assert.deepEqual(fakeDb.calls[0].params.slice(0, 6), ['residential', 'Residential Test', 'Meta test', 'OG test', 'OG desc test', 'media-og']);
 });
 
 test('content repository creates, updates, reads, and soft-disables block items', async () => {
@@ -342,14 +346,15 @@ test('content repository creates, updates, reads, and soft-disables block items'
           title: params[3],
           subtitle: params[4],
           body: params[5],
-          link_label: params[6],
-          link_url: params[7],
-          price: params[8],
-          badge: params[9],
-          metadata: params[10],
-          sort_order: params[11],
-          is_featured: params[12],
-          is_enabled: params[13]
+          image_media_id: params[6],
+          link_label: params[7],
+          link_url: params[8],
+          price: params[9],
+          badge: params[10],
+          metadata: params[11],
+          sort_order: params[12],
+          is_featured: params[13],
+          is_enabled: params[14]
         }]
       };
     }
@@ -390,14 +395,15 @@ test('content repository creates, updates, reads, and soft-disables block items'
           title: params[3],
           subtitle: params[4],
           body: params[5],
-          link_label: params[6],
-          link_url: params[7],
-          price: params[8],
-          badge: params[9],
-          metadata: params[10],
-          sort_order: params[11],
-          is_featured: params[12],
-          is_enabled: params[13]
+          image_media_id: params[6],
+          link_label: params[7],
+          link_url: params[8],
+          price: params[9],
+          badge: params[10],
+          metadata: params[11],
+          sort_order: params[12],
+          is_featured: params[13],
+          is_enabled: params[14]
         }]
       };
     }
@@ -410,6 +416,7 @@ test('content repository creates, updates, reads, and soft-disables block items'
     title: 'New camera',
     subtitle: '01',
     body: 'Body',
+    imageMediaId: 'media-new',
     linkLabel: 'Learn',
     linkUrl: 'contact.html',
     price: '$1',
@@ -424,6 +431,7 @@ test('content repository creates, updates, reads, and soft-disables block items'
     title: 'Updated camera',
     subtitle: '02',
     body: 'Updated body',
+    imageMediaId: 'media-updated',
     linkLabel: 'Quote',
     linkUrl: 'contact.html',
     price: '$2',
@@ -436,8 +444,10 @@ test('content repository creates, updates, reads, and soft-disables block items'
   const disabled = await repository.disableBlockItem('residential', 'camera_types', 'smart-doorbells');
 
   assert.equal(created.itemKey, 'new-camera');
+  assert.equal(created.imageMediaId, 'media-new');
   assert.equal(existing.title, 'Smart doorbells');
   assert.equal(updated.title, 'Updated camera');
+  assert.equal(updated.imageMediaId, 'media-updated');
   assert.equal(updated.isEnabled, false);
   assert.equal(disabled.isEnabled, false);
   assert.match(fakeDb.calls[0].sql, /join\s+pages/i);

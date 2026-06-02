@@ -183,12 +183,34 @@ function createLeadRepository(db = pool) {
     }));
   }
 
+  async function withTransaction(callback) {
+    if (typeof db.connect !== 'function') {
+      return callback(createLeadRepository(db), db);
+    }
+
+    const client = await db.connect();
+
+    try {
+      await client.query('begin');
+      const transactionRepository = createLeadRepository(client);
+      const result = await callback(transactionRepository, client);
+      await client.query('commit');
+      return result;
+    } catch (error) {
+      await client.query('rollback');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
   return {
     createLead,
     listLeads,
     getLead,
     updateLeadStatus,
-    countLeadsByStatus
+    countLeadsByStatus,
+    withTransaction
   };
 }
 

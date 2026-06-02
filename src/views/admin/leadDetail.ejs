@@ -1,0 +1,133 @@
+<main class="admin-page">
+  <div class="admin-page__head">
+    <div>
+      <p class="admin-kicker">Lead detail</p>
+      <h1><%= lead.name %></h1>
+      <p class="admin-muted">Current status: <strong><%= lead.status %></strong></p>
+    </div>
+    <div class="admin-actions">
+      <a class="admin-button admin-button--ghost" href="/admin/leads">Back to leads</a>
+    </div>
+  </div>
+
+  <% if (updated) { %>
+    <p class="admin-status" role="status">Lead status updated.</p>
+  <% } %>
+  <% if (error) { %>
+    <p class="admin-error" role="alert"><%= error %></p>
+  <% } %>
+
+  <div class="admin-grid admin-grid--two">
+    <section class="admin-panel">
+      <div class="admin-panel__head">
+        <h2>Contact</h2>
+      </div>
+      <div class="admin-panel__body">
+        <table class="admin-table">
+          <tbody>
+            <tr>
+              <th>Name</th>
+              <td><%= lead.name %></td>
+            </tr>
+            <tr>
+              <th>Phone</th>
+              <td><%= lead.phone %></td>
+            </tr>
+            <tr>
+              <th>Email</th>
+              <td><%= lead.email %></td>
+            </tr>
+            <tr>
+              <th>ZIP</th>
+              <td><%= lead.zip %></td>
+            </tr>
+            <tr>
+              <th>Property type</th>
+              <td><%= lead.propertyType || '' %></td>
+            </tr>
+            <tr>
+              <th>Camera count</th>
+              <td><%= lead.cameraCount || '' %></td>
+            </tr>
+            <tr>
+              <th>Status</th>
+              <td><span class="pill"><%= lead.status %></span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="admin-panel">
+      <div class="admin-panel__head">
+        <h2>Status</h2>
+      </div>
+      <div class="admin-panel__body">
+        <form method="post" action="/admin/leads/<%= encodeURIComponent(lead.id) %>/status" class="admin-form">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <div class="admin-field">
+            <label for="status">Lead status</label>
+            <select id="status" name="status" required>
+              <% const selectedStatus = formStatus || lead.status; %>
+              <% for (const status of leadStatuses) { %>
+                <option value="<%= status %>" <% if (selectedStatus === status) { %>selected<% } %>><%= status %></option>
+              <% } %>
+            </select>
+          </div>
+          <div class="admin-actions">
+            <button type="submit">Update status</button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </div>
+
+  <section class="admin-panel">
+    <div class="admin-panel__head">
+      <h2>Notes</h2>
+    </div>
+    <div class="admin-panel__body">
+      <% if (lead.notes) { %>
+        <p><%= lead.notes %></p>
+      <% } else { %>
+        <p class="admin-muted">No notes provided.</p>
+      <% } %>
+    </div>
+  </section>
+
+  <section class="admin-panel">
+    <div class="admin-panel__head">
+      <h2>Request metadata</h2>
+    </div>
+    <div class="admin-panel__body">
+      <table class="admin-table">
+        <tbody>
+          <tr>
+            <th>Lead ID</th>
+            <td><%= lead.id %></td>
+          </tr>
+          <tr>
+            <th>Source path</th>
+            <td><%= lead.sourcePath || '' %></td>
+          </tr>
+          <tr>
+            <th>IP address</th>
+            <td><%= lead.ipAddress || '' %></td>
+          </tr>
+          <tr>
+            <th>User agent</th>
+            <td><%= lead.userAgent || '' %></td>
+          </tr>
+          <tr>
+            <th>Created</th>
+            <td><%= formatLeadDateTime(lead.createdAt) %></td>
+          </tr>
+          <tr>
+            <th>Updated</th>
+            <td><%= formatLeadDateTime(lead.updatedAt) %></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>

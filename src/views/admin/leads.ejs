@@ -1,0 +1,74 @@
+<main class="admin-page">
+  <div class="admin-page__head">
+    <div>
+      <p class="admin-kicker">Lead admin</p>
+      <h1>Lead inbox</h1>
+      <p class="admin-muted">Review quote requests and track the sales status.</p>
+    </div>
+  </div>
+
+  <% if (error) { %>
+    <p class="admin-error" role="alert"><%= error %></p>
+  <% } %>
+
+  <section class="admin-panel">
+    <div class="admin-panel__head">
+      <h2>Filters</h2>
+    </div>
+    <div class="admin-panel__body">
+      <form method="get" action="/admin/leads" class="admin-actions">
+        <label for="status">Status</label>
+        <select id="status" name="status">
+          <option value="" <% if (!filterStatus) { %>selected<% } %>>All leads</option>
+          <% for (const status of leadStatuses) { %>
+            <option value="<%= status %>" <% if (filterStatus === status) { %>selected<% } %>><%= status %></option>
+          <% } %>
+        </select>
+        <button type="submit">Filter</button>
+        <a class="admin-button admin-button--ghost" href="/admin/leads">Clear</a>
+      </form>
+    </div>
+  </section>
+
+  <section class="admin-panel">
+    <div class="admin-panel__head">
+      <h2><%= filterStatus ? `${filterStatus} leads` : 'All leads' %></h2>
+    </div>
+    <div class="admin-panel__body">
+      <% if (!leads || leads.length === 0) { %>
+        <p class="admin-muted">No leads found.</p>
+      <% } else { %>
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Created</th>
+              <th>Name</th>
+              <th>Phone</th>
+              <th>Email</th>
+              <th>ZIP</th>
+              <th>Type</th>
+              <th>Cameras</th>
+              <th>Status</th>
+              <th>Detail</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% for (const lead of leads) { %>
+              <tr>
+                <td><%= formatLeadDateTime(lead.createdAt) %></td>
+                <td><%= lead.name %></td>
+                <td><%= lead.phone %></td>
+                <td><%= lead.email %></td>
+                <td><%= lead.zip %></td>
+                <td><%= lead.propertyType || '' %></td>
+                <td><%= lead.cameraCount || '' %></td>
+                <td><span class="pill"><%= lead.status %></span></td>
+                <td><a href="/admin/leads/<%= encodeURIComponent(lead.id) %>">View</a></td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      <% } %>
+    </div>
+  </section>
+</main>

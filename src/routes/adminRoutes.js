@@ -4,7 +4,7 @@ const multer = require('multer');
 const { createAdminRepository } = require('../repositories/adminRepository');
 const { createAuditRepository } = require('../repositories/auditRepository');
 const { createContentRepository } = require('../repositories/contentRepository');
-const { createLeadRepository } = require('../repositories/leadRepository');
+const { VALID_LEAD_STATUSES, createLeadRepository } = require('../repositories/leadRepository');
 const { createMediaRepository } = require('../repositories/mediaRepository');
 const {
   MAX_IMAGE_BYTES,
@@ -28,9 +28,51 @@ const { attachCsrfToken, getCsrfToken, verifyCsrfToken } = require('../middlewar
 
 const GENERIC_LOGIN_ERROR = 'Email or password is incorrect.';
 const DUMMY_PASSWORD_HASH = '$2b$12$0Us3jKrmtMCVUBfxFMewW.0zvjilGGsKpZsS2ftYG0vFFtpUxfzE.';
+const LEAD_STATUS_OPTIONS = Array.from(VALID_LEAD_STATUSES);
 
 function stringValue(value) {
   return typeof value === 'string' ? value : String(value || '');
+}
+
+function parseLeadStatus(value) {
+  const status = stringValue(value).trim();
+
+  if (!status) {
+    return {
+      ok: true,
+      status: null
+    };
+  }
+
+  if (!VALID_LEAD_STATUSES.has(status)) {
+    return {
+      ok: false,
+      error: 'Choose a valid lead status.'
+    };
+  }
+
+  return {
+    ok: true,
+    status
+  };
+}
+
+function isValidLeadId(value) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(stringValue(value).trim());
+}
+
+function formatLeadDateTime(value) {
+  if (!value) {
+    return '';
+  }
+
+  const date = value instanceof Date ? value : new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return String(value);
+  }
+
+  return `${date.toISOString().slice(0, 16).replace('T', ' ')} UTC`;
 }
 
 function renderView(app, view, locals) {
@@ -179,6 +221,15 @@ function ensureContentRepository(contentRepository, res) {
   return false;
 }
 
+function ensureLeadRepository(leadRepository, res) {
+  if (leadRepository) {
+    return true;
+  }
+
+  res.status(503).send('Lead repository is unavailable.');
+  return false;
+}
+
 function ensureMediaRepository(mediaRepository, res) {
   if (mediaRepository) {
     return true;
@@ -211,6 +262,20 @@ async function runContentTransaction(contentRepository, auditRepository, callbac
   }
 
   return callback(contentRepository, auditRepository);
+}
+
+async function runLeadTransaction(leadRepository, auditRepository, callback) {
+  if (leadRepository && typeof leadRepository.withTransaction === 'function') {
+    return leadRepository.withTransaction((transactionLeadRepository, transactionClient) => {
+      const transactionAuditRepository = transactionClient
+        ? createAuditRepository(transactionClient)
+        : auditRepository;
+
+      return callback(transactionLeadRepository, transactionAuditRepository);
+    });
+  }
+
+  return callback(leadRepository, auditRepository);
 }
 
 async function runMediaTransaction(mediaRepository, auditRepository, callback) {
@@ -283,6 +348,39 @@ function createAdminRouter(options = {}) {
       uploaded: req.query.uploaded === '1',
       deleted: req.query.deleted === '1',
       error: null,
+      ...locals
+    }, statusCode);
+  }
+
+  async function renderLeadListPage(req, res, locals = {}, statusCode = 200) {
+    const filterStatus = locals.filterStatus || null;
+    const leads = locals.leads || await leadRepository.listLeads({
+      ...(filterStatus ? { status: filterStatus } : {}),
+      limit: 100
+    });
+
+    await renderAdminView(req, res, 'admin/leads', {
+      title: 'Leads',
+      csrfToken: res.locals.csrfToken,
+      leads,
+      leadStatuses: LEAD_STATUS_OPTIONS,
+      filterStatus,
+      error: null,
+      formatLeadDateTime,
+      ...locals
+    }, statusCode);
+  }
+
+  async function renderLeadDetailPage(req, res, lead, locals = {}, statusCode = 200) {
+    await renderAdminView(req, res, 'admin/leadDetail', {
+      title: `Lead ${lead.name || lead.id}`,
+      csrfToken: res.locals.csrfToken,
+      lead,
+      leadStatuses: LEAD_STATUS_OPTIONS,
+      formStatus: lead.status,
+      updated: req.query.updated === '1',
+      error: null,
+      formatLeadDateTime,
       ...locals
     }, statusCode);
   }
@@ -365,6 +463,106 @@ function createAdminRouter(options = {}) {
         csrfToken: res.locals.csrfToken,
         dashboard
       });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.get('/leads', async (req, res, next) => {
+    try {
+      if (!ensureLeadRepository(leadRepository, res)) {
+        return;
+      }
+
+      const parsedStatus = parseLeadStatus(req.query.status);
+      if (!parsedStatus.ok) {
+        await renderLeadListPage(req, res, {
+          leads: [],
+          filterStatus: null,
+          error: parsedStatus.error
+        }, 400);
+        return;
+      }
+
+      await renderLeadListPage(req, res, {
+        filterStatus: parsedStatus.status
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.get('/leads/:id', async (req, res, next) => {
+    try {
+      if (!ensureLeadRepository(leadRepository, res)) {
+        return;
+      }
+
+      if (!isValidLeadId(req.params.id)) {
+        res.status(404).send('Lead not found.');
+        return;
+      }
+
+      const lead = await leadRepository.getLead(req.params.id);
+      if (!lead) {
+        res.status(404).send('Lead not found.');
+        return;
+      }
+
+      await renderLeadDetailPage(req, res, lead);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post('/leads/:id/status', verifyCsrfToken, async (req, res, next) => {
+    try {
+      if (!ensureLeadRepository(leadRepository, res)) {
+        return;
+      }
+
+      if (!isValidLeadId(req.params.id)) {
+        res.status(404).send('Lead not found.');
+        return;
+      }
+
+      const lead = await leadRepository.getLead(req.params.id);
+      if (!lead) {
+        res.status(404).send('Lead not found.');
+        return;
+      }
+
+      const parsedStatus = parseLeadStatus(req.body && req.body.status);
+      if (!parsedStatus.ok || !parsedStatus.status) {
+        await renderLeadDetailPage(req, res, lead, {
+          formStatus: stringValue(req.body && req.body.status),
+          error: 'Choose a valid lead status.'
+        }, 400);
+        return;
+      }
+
+      const updatedLead = await runLeadTransaction(leadRepository, auditRepository, async (transactionLeadRepository, transactionAuditRepository) => {
+        const updated = await transactionLeadRepository.updateLeadStatus(req.params.id, parsedStatus.status);
+        if (!updated) {
+          return null;
+        }
+
+        await logAudit(transactionAuditRepository, req.adminUser, {
+          action: 'admin.lead.status.update',
+          entityType: 'lead',
+          entityId: updated.id || lead.id || req.params.id,
+          summary: `Changed lead ${updated.name || lead.name || updated.id || req.params.id} status from ${lead.status} to ${updated.status}.`
+        });
+
+        return updated;
+      });
+
+      if (!updatedLead) {
+        res.status(404).send('Lead not found.');
+        return;
+      }
+
+      res.redirect(`/admin/leads/${encodeURIComponent(req.params.id)}?updated=1`);
     } catch (error) {
       next(error);
     }

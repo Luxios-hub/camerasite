@@ -1,7 +1,18 @@
+<% const visualMode = typeof adminPreview !== 'undefined' && adminPreview && adminPreview.enabled; %>
+<% const preview = visualMode ? adminPreview : {
+  blockEditUrl: () => '',
+  blockLabel: () => '',
+  itemEditUrl: () => '',
+  itemLabel: () => ''
+}; %>
 <% const hero = blocksByKey.hero; %>
 <% if (hero) { %>
   <% const heroSettings = hero.settings || {}; %>
-  <header class="hero">
+  <header class="hero" <% if (visualMode) { %>data-admin-visual-region="hero"<% } %>>
+    <%- include('../partials/admin/visualEditControl', {
+      label: 'Edit ' + preview.blockLabel(hero),
+      href: preview.blockEditUrl('hero')
+    }) %>
     <div class="container hero__inner">
       <div class="hero__copy">
         <% if (hero.eyebrow) { %><p class="eyebrow hero__eyebrow"><%= hero.eyebrow %></p><% } %>
@@ -34,13 +45,22 @@
           <% } %>
         </div>
       <% } %>
+      <%- include('../partials/admin/visualEditControl', {
+        label: 'Edit image',
+        href: preview.blockEditUrl('hero'),
+        className: 'admin-visual-edit--image'
+      }) %>
     </div>
   </header>
 <% } %>
 
 <% const systems = blocksByKey.systems; %>
 <% if (systems) { %>
-  <section class="section section--paper" id="systems">
+  <section class="section section--paper" id="systems" <% if (visualMode) { %>data-admin-visual-region="systems"<% } %>>
+    <%- include('../partials/admin/visualEditControl', {
+      label: 'Edit ' + preview.blockLabel(systems),
+      href: preview.blockEditUrl('systems')
+    }) %>
     <div class="container">
       <div class="section-head section-head--split">
         <div>
@@ -53,6 +73,7 @@
       <div class="two-track">
         <% for (const item of items('systems')) { %>
           <% const itemMeta = item.metadata || {}; %>
+          <% if (visualMode) { %><div class="admin-visual-item-frame" data-admin-visual-item="<%= item.itemKey || item.id %>"><% } %>
           <a class="track-card" href="<%= safeUrl(item.linkUrl) %>">
             <% const itemMedia = safeUrl(mediaUrl(item), null); %>
             <% if (itemMedia) { %>
@@ -72,6 +93,17 @@
             <% } %>
             <% if (item.linkLabel) { %><span class="track-card__cta"><%= item.linkLabel %></span><% } %>
           </a>
+          <%- include('../partials/admin/visualEditControl', {
+            label: 'Edit ' + preview.itemLabel(item) + ' card',
+            href: preview.itemEditUrl('systems', item),
+            className: 'admin-visual-edit--item'
+          }) %>
+          <%- include('../partials/admin/visualEditControl', {
+            label: 'Edit image',
+            href: preview.itemEditUrl('systems', item),
+            className: 'admin-visual-edit--image'
+          }) %>
+          <% if (visualMode) { %></div><% } %>
         <% } %>
       </div>
     </div>
@@ -80,7 +112,11 @@
 
 <% const included = blocksByKey.included; %>
 <% if (included) { %>
-  <section class="section">
+  <section class="section" <% if (visualMode) { %>data-admin-visual-region="included"<% } %>>
+    <%- include('../partials/admin/visualEditControl', {
+      label: 'Edit ' + preview.blockLabel(included),
+      href: preview.blockEditUrl('included')
+    }) %>
     <div class="container">
       <div class="section-head">
         <% if (included.eyebrow) { %><p class="eyebrow section-head__eyebrow"><%= included.eyebrow %></p><% } %>
@@ -88,11 +124,18 @@
       </div>
       <div class="feature-grid">
         <% for (const item of items('included')) { %>
+          <% if (visualMode) { %><div class="admin-visual-item-frame" data-admin-visual-item="<%= item.itemKey || item.id %>"><% } %>
           <article class="feature-tile">
             <% if (item.subtitle) { %><p class="feature-tile__num"><%= item.subtitle %></p><% } %>
             <h4 class="feature-tile__title"><%= item.title %></h4>
             <% if (item.body) { %><p class="feature-tile__body"><%= item.body %></p><% } %>
           </article>
+          <%- include('../partials/admin/visualEditControl', {
+            label: 'Edit ' + preview.itemLabel(item) + ' item',
+            href: preview.itemEditUrl('included', item),
+            className: 'admin-visual-edit--item'
+          }) %>
+          <% if (visualMode) { %></div><% } %>
         <% } %>
       </div>
     </div>
@@ -102,7 +145,11 @@
 <% const whyLocal = blocksByKey.why_local; %>
 <% if (whyLocal) { %>
   <% const whySettings = whyLocal.settings || {}; %>
-  <section class="section section--paper">
+  <section class="section section--paper" <% if (visualMode) { %>data-admin-visual-region="why_local"<% } %>>
+    <%- include('../partials/admin/visualEditControl', {
+      label: 'Edit ' + preview.blockLabel(whyLocal),
+      href: preview.blockEditUrl('why_local')
+    }) %>
     <div class="container">
       <div class="two-track">
         <% const whyMedia = safeUrl(mediaUrl(whyLocal), null); %>
@@ -118,18 +165,28 @@
             <% } %>
           </div>
         <% } %>
+        <%- include('../partials/admin/visualEditControl', {
+          label: 'Edit image',
+          href: preview.blockEditUrl('why_local'),
+          className: 'admin-visual-edit--image'
+        }) %>
         <div>
           <% if (whyLocal.eyebrow) { %><p class="eyebrow section-head__eyebrow"><%= whyLocal.eyebrow %></p><% } %>
           <h2 class="section-head__title text-balance" style="font-size: clamp(2rem, 1.5rem + 2.2vw, 3rem); margin-bottom: var(--space-5);"><%= whyLocal.title %></h2>
           <% if (whyLocal.body) { %><p class="section-head__lede" style="margin-bottom: var(--space-6);"><%= whyLocal.body %></p><% } %>
           <ul class="trust-points" style="border-top: 1px solid var(--hairline);">
             <% for (const item of items('why_local')) { %>
-              <li>
+              <li <% if (visualMode) { %>class="admin-visual-item-frame" data-admin-visual-item="<%= item.itemKey || item.id %>"<% } %>>
                 <% if (item.subtitle) { %><span class="trust-points__num"><%= item.subtitle %></span><% } %>
                 <div>
                   <p class="trust-points__title"><%= item.title %></p>
                   <% if (item.body) { %><p class="trust-points__body"><%= item.body %></p><% } %>
                 </div>
+                <%- include('../partials/admin/visualEditControl', {
+                  label: 'Edit ' + preview.itemLabel(item) + ' item',
+                  href: preview.itemEditUrl('why_local', item),
+                  className: 'admin-visual-edit--item'
+                }) %>
               </li>
             <% } %>
           </ul>
@@ -146,7 +203,11 @@
 
 <% const serviceArea = blocksByKey.service_area; %>
 <% if (serviceArea) { %>
-  <section class="section">
+  <section class="section" <% if (visualMode) { %>data-admin-visual-region="service_area"<% } %>>
+    <%- include('../partials/admin/visualEditControl', {
+      label: 'Edit ' + preview.blockLabel(serviceArea),
+      href: preview.blockEditUrl('service_area')
+    }) %>
     <div class="container">
       <div class="section-head">
         <% if (serviceArea.eyebrow) { %><p class="eyebrow section-head__eyebrow"><%= serviceArea.eyebrow %></p><% } %>
@@ -171,13 +232,18 @@
 
         <div class="area__regions">
           <% for (const item of items('service_area')) { %>
-            <div class="area__region">
+            <div class="area__region<%= visualMode ? ' admin-visual-item-frame' : '' %>" <% if (visualMode) { %>data-admin-visual-item="<%= item.itemKey || item.id %>"<% } %>>
               <h4><%= item.title %></h4>
               <% if (item.metadata && item.metadata.areas) { %>
                 <ul>
                   <% for (const area of item.metadata.areas) { %><li><%= area %></li><% } %>
                 </ul>
               <% } %>
+              <%- include('../partials/admin/visualEditControl', {
+                label: 'Edit ' + preview.itemLabel(item) + ' item',
+                href: preview.itemEditUrl('service_area', item),
+                className: 'admin-visual-edit--item'
+              }) %>
             </div>
           <% } %>
         </div>
@@ -188,7 +254,11 @@
 
 <% const recentWork = blocksByKey.recent_work; %>
 <% if (recentWork) { %>
-  <section class="section section--paper">
+  <section class="section section--paper" <% if (visualMode) { %>data-admin-visual-region="recent_work"<% } %>>
+    <%- include('../partials/admin/visualEditControl', {
+      label: 'Edit ' + preview.blockLabel(recentWork),
+      href: preview.blockEditUrl('recent_work')
+    }) %>
     <div class="container">
       <div class="section-head section-head--split">
         <div>
@@ -203,6 +273,7 @@
       <div class="installs-grid">
         <% for (const item of items('recent_work')) { %>
           <% const itemMeta = item.metadata || {}; %>
+          <% if (visualMode) { %><div class="admin-visual-item-frame" data-admin-visual-item="<%= item.itemKey || item.id %>"><% } %>
           <article class="install-card">
             <% const recentMedia = safeUrl(mediaUrl(item), null); %>
             <% if (recentMedia) { %>
@@ -215,6 +286,17 @@
               <% if (item.subtitle) { %><p class="install-card__meta"><%= item.subtitle %></p><% } %>
             </div>
           </article>
+          <%- include('../partials/admin/visualEditControl', {
+            label: 'Edit ' + preview.itemLabel(item) + ' item',
+            href: preview.itemEditUrl('recent_work', item),
+            className: 'admin-visual-edit--item'
+          }) %>
+          <%- include('../partials/admin/visualEditControl', {
+            label: 'Edit image',
+            href: preview.itemEditUrl('recent_work', item),
+            className: 'admin-visual-edit--image'
+          }) %>
+          <% if (visualMode) { %></div><% } %>
         <% } %>
       </div>
     </div>

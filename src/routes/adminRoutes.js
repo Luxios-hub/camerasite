@@ -26,6 +26,7 @@ const {
 } = require('../services/adminViewModel');
 const { createRequireAdmin, destroySession } = require('../middleware/auth');
 const { attachCsrfToken, getCsrfToken, verifyCsrfToken } = require('../middleware/csrf');
+const { renderPublicPage } = require('./publicRoutes');
 
 const GENERIC_LOGIN_ERROR = 'Email or password is incorrect.';
 const DUMMY_PASSWORD_HASH = '$2b$12$0Us3jKrmtMCVUBfxFMewW.0zvjilGGsKpZsS2ftYG0vFFtpUxfzE.';
@@ -242,6 +243,81 @@ function ensureMediaRepository(mediaRepository, res) {
 
 function findBlock(page, blockKey) {
   return (page.blocks || []).find((block) => block.blockKey === blockKey) || null;
+}
+
+function encodePathSegment(value) {
+  return encodeURIComponent(String(value || ''));
+}
+
+function humanLabel(value) {
+  const words = stringValue(value)
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (!words) {
+    return '';
+  }
+
+  return words.replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function itemRouteId(item) {
+  return item && (item.id || item.itemKey);
+}
+
+function pagePublicUrl(page) {
+  return page.path || page.canonicalPath || '/';
+}
+
+function visualPageSummary(page) {
+  return {
+    slug: page.slug,
+    label: humanLabel(page.slug),
+    title: page.title || humanLabel(page.slug),
+    path: pagePublicUrl(page),
+    isPublished: page.isPublished !== false,
+    visualUrl: `/admin/visual/${encodePathSegment(page.slug)}`
+  };
+}
+
+function buildAdminPreviewLocals(viewModel, pages = []) {
+  const pageSlug = viewModel.page.slug;
+  const editPageUrl = `/admin/pages/${encodePathSegment(pageSlug)}`;
+
+  return {
+    enabled: true,
+    pageSlug,
+    pageTitle: viewModel.page.title || humanLabel(pageSlug),
+    publicUrl: pagePublicUrl(viewModel.page),
+    editPageUrl,
+    pages: pages.map(visualPageSummary),
+    dashboardUrl: '/admin',
+    settingsUrl: '/admin/settings',
+    mediaUrl: '/admin/media',
+    blockEditUrl(blockKey) {
+      return `${editPageUrl}#block-${encodePathSegment(blockKey)}`;
+    },
+    blockLabel(block, fallback = 'section') {
+      const label = humanLabel(block && block.blockKey) || humanLabel(fallback) || 'Section';
+      return `${label} section`;
+    },
+    itemEditUrl(blockKey, item) {
+      const routeId = itemRouteId(item);
+
+      if (!routeId) {
+        return this.blockEditUrl(blockKey);
+      }
+
+      return `/admin/pages/${encodePathSegment(pageSlug)}/blocks/${encodePathSegment(blockKey)}/items/${encodePathSegment(routeId)}/edit`;
+    },
+    itemLabel(item, fallback = 'item') {
+      return item && (item.title || humanLabel(item.itemKey)) || humanLabel(fallback) || 'Item';
+    },
+    newItemUrl(blockKey) {
+      return `/admin/pages/${encodePathSegment(pageSlug)}/blocks/${encodePathSegment(blockKey)}/items/new`;
+    }
+  };
 }
 
 async function logAudit(auditRepository, admin, event) {
@@ -464,6 +540,37 @@ function createAdminRouter(options = {}) {
         csrfToken: res.locals.csrfToken,
         dashboard
       });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.get('/visual', async (req, res) => {
+    res.redirect('/admin/visual/home');
+  });
+
+  router.get('/visual/:slug', async (req, res, next) => {
+    try {
+      if (!ensureContentRepository(contentRepository, res)) {
+        return;
+      }
+
+      const pages = typeof contentRepository.listPages === 'function'
+        ? await contentRepository.listPages()
+        : [];
+      const rendered = await renderPublicPage(
+        req,
+        res,
+        req.params.slug,
+        { repository: contentRepository },
+        (viewModel) => ({
+          adminPreview: buildAdminPreviewLocals(viewModel, pages)
+        })
+      );
+
+      if (!rendered) {
+        res.status(404).send('Page not found.');
+      }
     } catch (error) {
       next(error);
     }

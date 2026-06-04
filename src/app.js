@@ -93,6 +93,7 @@ function createApp(options = {}) {
   app.use('/assets', express.static(resolveFromRoot('assets')));
   app.use('/uploads', express.static(resolveUploadRoot()));
   app.use('/admin/css', express.static(resolveFromRoot('admin', 'css')));
+  app.use('/admin/js', express.static(resolveFromRoot('admin', 'js')));
 
   if (options.session !== false) {
     app.use(createSessionMiddleware(options));

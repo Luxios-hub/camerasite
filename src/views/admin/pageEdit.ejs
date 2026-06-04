@@ -7,6 +7,11 @@
     </div>
     <div class="admin-actions">
       <a class="admin-button admin-button--ghost" href="/admin/pages">All pages</a>
+      <% if (page.isPublished !== false) { %>
+        <a class="admin-button" href="/admin/visual/<%= encodeURIComponent(page.slug) %>">Visual edit</a>
+      <% } else { %>
+        <span class="admin-muted">Publish this page to use visual edit.</span>
+      <% } %>
       <a class="admin-button admin-button--ghost" href="<%= page.path || page.canonicalPath || '/' %>">View public</a>
     </div>
   </div>
@@ -82,9 +87,12 @@
       </div>
       <div class="admin-panel__body">
         <% for (const block of page.blocks || []) { %>
-          <section class="admin-block-editor">
+          <section class="admin-block-editor" id="block-<%= block.blockKey %>">
             <div class="admin-block-editor__head">
-              <h3><%= block.blockKey %></h3>
+              <div>
+                <h3><%= block.title || block.blockKey %></h3>
+                <p class="admin-muted"><%= block.blockKey %></p>
+              </div>
               <a href="/admin/pages/<%= encodeURIComponent(page.slug) %>/blocks/<%= encodeURIComponent(block.blockKey) %>/items/new">New item</a>
             </div>
             <div class="admin-form__grid">

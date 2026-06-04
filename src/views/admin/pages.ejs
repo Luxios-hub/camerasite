@@ -17,6 +17,7 @@
           <th>Path</th>
           <th>Status</th>
           <th>Updated</th>
+          <th>Preview/edit</th>
           <th>Edit</th>
         </tr>
       </thead>
@@ -34,6 +35,13 @@
               <% } %>
             </td>
             <td><%= page.updatedAt || page.updated_at || '' %></td>
+            <td>
+              <% if (page.isPublished !== false) { %>
+                <a href="/admin/visual/<%= encodeURIComponent(page.slug) %>">Visual editor</a>
+              <% } else { %>
+                <span class="admin-muted">Publish to preview</span>
+              <% } %>
+            </td>
             <td><a href="/admin/pages/<%= encodeURIComponent(page.slug) %>">Edit</a></td>
           </tr>
         <% } %>

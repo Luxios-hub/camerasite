@@ -1,0 +1,17 @@
+<%
+  const visualPreviewEnabled = typeof adminPreview !== 'undefined' && adminPreview && adminPreview.enabled;
+  const controlLabel = typeof label === 'string' && label.trim() ? label : 'Edit';
+  const controlHref = typeof href === 'string' && href.trim() ? href : '';
+  const controlClassName = typeof className === 'string' ? className : '';
+%>
+<% if (visualPreviewEnabled && controlHref) { %>
+  <a
+    class="admin-visual-edit <%= controlClassName %>"
+    href="<%= controlHref %>"
+    data-admin-editor-url="<%= controlHref %>"
+    data-admin-editor-title="<%= controlLabel %>"
+    aria-label="<%= controlLabel %>"
+  >
+    <span><%= controlLabel %></span>
+  </a>
+<% } %>

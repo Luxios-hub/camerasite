@@ -1,4 +1,9 @@
 <% if (block) { %>
+  <% const visualMode = typeof adminPreview !== 'undefined' && adminPreview && adminPreview.enabled; %>
+  <% const preview = visualMode ? adminPreview : {
+    blockEditUrl: () => '',
+    blockLabel: () => ''
+  }; %>
   <% function buttonClass(style) {
     if (style === 'whatsapp') return 'btn btn--whatsapp';
     if (style === 'ghost-light') return 'btn btn--ghost-light';
@@ -6,7 +11,11 @@
     if (style === 'blue') return 'btn btn--blue';
     return 'btn btn--primary btn--icon';
   } %>
-  <section class="cta-band">
+  <section class="cta-band" <% if (visualMode) { %>data-admin-visual-region="<%= block.blockKey || 'quote_cta' %>"<% } %>>
+    <%- include('../admin/visualEditControl', {
+      label: 'Edit ' + preview.blockLabel(block),
+      href: preview.blockEditUrl(block.blockKey || 'quote_cta')
+    }) %>
     <div class="container cta-band__inner">
       <div>
         <% if (block.title) { %>

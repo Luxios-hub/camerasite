@@ -1,5 +1,16 @@
+<% const visualMode = typeof adminPreview !== 'undefined' && adminPreview && adminPreview.enabled; %>
+<% const preview = visualMode ? adminPreview : {
+  blockEditUrl: () => '',
+  blockLabel: () => '',
+  itemEditUrl: () => '',
+  itemLabel: () => ''
+}; %>
 <% const pageHeader = blocksByKey.page_header || page; %>
-<header class="page-head">
+<header class="page-head" <% if (visualMode) { %>data-admin-visual-region="page_header"<% } %>>
+  <%- include('../partials/admin/visualEditControl', {
+    label: 'Edit page header',
+    href: blocksByKey.page_header ? preview.blockEditUrl('page_header') : preview.editPageUrl
+  }) %>
   <div class="container">
     <% if (pageHeader.eyebrow || page.headerEyebrow) { %>
       <p class="eyebrow page-head__eyebrow"><%= pageHeader.eyebrow || page.headerEyebrow %></p>
@@ -24,13 +35,17 @@
   const errorFor = (name) => quoteErrors[name] || null;
 %>
 
-<section class="section">
+<section class="section" <% if (visualMode) { %>data-admin-visual-region="contact"<% } %>>
   <div class="container">
     <div class="contact-layout">
       <% if (contactInfo) { %>
-        <aside class="contact-info">
+        <aside class="contact-info" <% if (visualMode) { %>data-admin-visual-region="contact_info"<% } %>>
+          <%- include('../partials/admin/visualEditControl', {
+            label: 'Edit ' + preview.blockLabel(contactInfo),
+            href: preview.blockEditUrl('contact_info')
+          }) %>
           <% for (const item of items('contact_info')) { %>
-            <div class="contact-info__group">
+            <div class="contact-info__group<%= visualMode ? ' admin-visual-item-frame' : '' %>" <% if (visualMode) { %>data-admin-visual-item="<%= item.itemKey || item.id %>"<% } %>>
               <h4><%= item.title %></h4>
               <% if (item.linkUrl && item.linkLabel && item.itemKey === 'whatsapp') { %>
                 <% const contactHref = safeUrl(item.linkUrl); %>
@@ -46,13 +61,22 @@
                   <% } %>
                 </p>
               <% } %>
+              <%- include('../partials/admin/visualEditControl', {
+                label: 'Edit ' + preview.itemLabel(item) + ' item',
+                href: preview.itemEditUrl('contact_info', item),
+                className: 'admin-visual-edit--item'
+              }) %>
             </div>
           <% } %>
         </aside>
       <% } %>
 
       <% if (quoteForm) { %>
-        <div class="form-card">
+        <div class="form-card" <% if (visualMode) { %>data-admin-visual-region="quote_form"<% } %>>
+          <%- include('../partials/admin/visualEditControl', {
+            label: 'Edit ' + preview.blockLabel(quoteForm),
+            href: preview.blockEditUrl('quote_form')
+          }) %>
           <% if (quoteForm.eyebrow) { %><p class="eyebrow section-head__eyebrow"><%= quoteForm.eyebrow %></p><% } %>
           <h2 class="section-head__title" style="font-size: var(--fs-xl); margin-bottom: var(--space-5);"><%= quoteForm.title %></h2>
 

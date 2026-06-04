@@ -196,9 +196,12 @@ async function renderPublicPage(req, res, slug, options = {}, extraLocals = {}, 
     return false;
   }
 
+  const resolvedExtraLocals = typeof extraLocals === 'function'
+    ? await extraLocals(viewModel)
+    : extraLocals;
   const locals = {
     ...viewModel,
-    ...extraLocals
+    ...resolvedExtraLocals
   };
   const body = await renderView(req.app, viewForTemplate(viewModel.page.template), locals);
 
@@ -303,5 +306,7 @@ module.exports = {
   PUBLIC_ROUTE_MAP,
   createPublicRouter,
   createQuoteRateLimiter,
-  createQuoteLeadSchema
+  createQuoteLeadSchema,
+  renderPublicPage,
+  viewForTemplate
 };

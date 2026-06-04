@@ -1,0 +1,37 @@
+<% const previewPages = (adminPreview && adminPreview.pages) || []; %>
+<div class="admin-visual-toolbar" role="banner">
+  <div class="admin-visual-toolbar__brand">
+    <a href="<%= adminPreview.dashboardUrl %>">Admin</a>
+    <strong>Visual editor</strong>
+    <span>Viewing <%= adminPreview.pageSlug %></span>
+  </div>
+  <div class="admin-visual-toolbar__controls">
+    <label class="admin-visual-page-picker">
+      <span>Page</span>
+      <select data-admin-visual-page-select>
+        <% for (const previewPage of previewPages) { %>
+          <option value="<%= previewPage.visualUrl %>" <%= previewPage.slug === adminPreview.pageSlug ? 'selected' : '' %>>
+            <%= previewPage.label || previewPage.title %>
+          </option>
+        <% } %>
+      </select>
+    </label>
+    <nav class="admin-visual-page-links" aria-label="Visual editor pages">
+      <% for (const previewPage of previewPages) { %>
+        <a href="<%= previewPage.visualUrl %>" class="<%= previewPage.slug === adminPreview.pageSlug ? 'is-current' : '' %>"><%= previewPage.label || previewPage.slug %></a>
+      <% } %>
+    </nav>
+    <a href="<%= adminPreview.editPageUrl %>" data-admin-editor-url="<%= adminPreview.editPageUrl %>" data-admin-editor-title="Edit page details">Page details</a>
+    <a href="<%= adminPreview.mediaUrl %>" data-admin-editor-url="<%= adminPreview.mediaUrl %>" data-admin-editor-title="Media library">Media</a>
+    <a href="<%= adminPreview.publicUrl %>" target="_blank" rel="noopener">Open live</a>
+  </div>
+</div>
+
+<div class="admin-visual-backdrop" data-admin-visual-backdrop hidden></div>
+<aside class="admin-visual-drawer" data-admin-visual-drawer aria-hidden="true" aria-label="Admin editor">
+  <div class="admin-visual-drawer__head">
+    <strong data-admin-visual-drawer-title>Edit content</strong>
+    <button type="button" data-admin-visual-close aria-label="Close editor">Close</button>
+  </div>
+  <iframe title="Admin editor" data-admin-visual-frame></iframe>
+</aside>

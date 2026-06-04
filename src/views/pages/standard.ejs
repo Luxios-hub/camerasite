@@ -1,5 +1,16 @@
+<% const visualMode = typeof adminPreview !== 'undefined' && adminPreview && adminPreview.enabled; %>
+<% const preview = visualMode ? adminPreview : {
+  blockEditUrl: () => '',
+  blockLabel: () => '',
+  itemEditUrl: () => '',
+  itemLabel: () => ''
+}; %>
 <% const pageHeader = blocksByKey.page_header || page; %>
-<header class="page-head">
+<header class="page-head" <% if (visualMode) { %>data-admin-visual-region="page_header"<% } %>>
+  <%- include('../partials/admin/visualEditControl', {
+    label: 'Edit page header',
+    href: blocksByKey.page_header ? preview.blockEditUrl('page_header') : preview.editPageUrl
+  }) %>
   <div class="container">
     <% if (pageHeader.eyebrow || page.headerEyebrow) { %>
       <p class="eyebrow page-head__eyebrow"><%= pageHeader.eyebrow || page.headerEyebrow %></p>
@@ -13,6 +24,13 @@
 
 <% for (const block of enabledBlocks) { %>
   <% if (block.blockKey === 'page_header' || block.blockType === 'cta_band') { continue; } %>
+  <% if (visualMode) { %>
+    <div class="admin-visual-block-frame" data-admin-visual-region="<%= block.blockKey %>">
+      <%- include('../partials/admin/visualEditControl', {
+        label: 'Edit ' + preview.blockLabel(block),
+        href: preview.blockEditUrl(block.blockKey)
+      }) %>
+  <% } %>
 
   <% if (block.blockKey === 'industries') { %>
     <section class="section">
@@ -324,6 +342,7 @@
       </div>
     </section>
   <% } %>
+  <% if (visualMode) { %></div><% } %>
 <% } %>
 
 <%- include('../partials/public/ctaBand', { block: blocksByKey.quote_cta }) %>

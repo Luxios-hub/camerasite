@@ -423,6 +423,11 @@ a:hover {
   margin: 0;
 }
 
+.admin-block-editor__head p {
+  font-size: 0.82rem;
+  margin: 2px 0 0;
+}
+
 .admin-form {
   display: grid;
   gap: 18px;

@@ -2,8 +2,15 @@
 <html lang="en">
 <head>
   <%- include('../partials/public/head') %>
+  <% if (typeof adminPreview !== 'undefined' && adminPreview && adminPreview.enabled) { %>
+    <link rel="stylesheet" href="/admin/css/visual-editor.css" />
+  <% } %>
 </head>
-<body>
+<body class="<%= typeof adminPreview !== 'undefined' && adminPreview && adminPreview.enabled ? 'admin-visual-body' : '' %>">
+  <% if (typeof adminPreview !== 'undefined' && adminPreview && adminPreview.enabled) { %>
+    <%- include('../partials/admin/visualToolbar') %>
+  <% } %>
+
   <%- include('../partials/public/trustBar') %>
   <%- include('../partials/public/nav') %>
 
@@ -11,5 +18,8 @@
 
   <%- include('../partials/public/footer') %>
   <script src="/js/main.js" defer></script>
+  <% if (typeof adminPreview !== 'undefined' && adminPreview && adminPreview.enabled) { %>
+    <script src="/admin/js/visual-editor.js" defer></script>
+  <% } %>
 </body>
 </html>

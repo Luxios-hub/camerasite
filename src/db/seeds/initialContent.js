@@ -201,8 +201,9 @@ const pages = {
         settings: {
           imagePlaceholder: 'hero-front-porch-doorbell',
           imageSlot: 'hero',
+          publicPath: '/assets/images/hero-front-porch-dusk.jpg',
+          altText: 'Warm front entrance of a brick home glowing at dusk',
           placeholderClass: 'photo-ph--dusk',
-          imageCaption: ['Placeholder - front door at dusk', 'Swap in real photo'],
           primaryCta: { label: 'Get a free quote', href: 'contact.html' },
           secondaryCta: { label: 'WhatsApp us', href: whatsappQuoteUrl }
         },
@@ -227,6 +228,8 @@ const pages = {
               audience: 'For homeowners',
               imagePlaceholder: 'residential-doorbell',
               imageSlot: 'home.two_track.residential',
+              publicPath: '/assets/images/residential-camera.jpg',
+              altText: 'Black turret security camera mounted under the eaves of a modern home',
               placeholderClass: 'photo-ph--porch',
               bullets: [
                 'Doorbell, outdoor, and indoor cameras',
@@ -245,6 +248,8 @@ const pages = {
               audience: 'For businesses',
               imagePlaceholder: 'commercial-storefront',
               imageSlot: 'home.two_track.commercial',
+              publicPath: '/assets/images/commercial-camera.jpg',
+              altText: 'White dome security camera mounted beside the glass entrance of an office building',
               placeholderClass: 'photo-ph--storefront',
               bullets: [
                 'Multi-site management, retail, hospitality, warehouse',
@@ -291,9 +296,11 @@ const pages = {
         settings: {
           imagePlaceholder: 'local-installer-photo',
           imageSlot: 'home.why_local',
+          publicPath: '/assets/images/installer-mounting-camera.jpg',
+          altText: 'Technician mounting and wiring a security camera near the ceiling',
+          imagePosition: '30% center',
           placeholderClass: 'photo-ph--interior',
           imageTag: 'Local crew',
-          imageCaption: ['Placeholder - installer on a job', 'Swap in real photo'],
           credentials: ['NY DOS #12000310924', 'NJ Lic. #34BX01200123', 'BBB A+ Rated']
         },
         sortOrder: 40,
@@ -341,6 +348,8 @@ const pages = {
             metadata: {
               imagePlaceholder: 'install-bay-ridge',
               imageSlot: 'home.recent_work.bay_ridge',
+              publicPath: '/assets/images/install-bay-ridge-brick.jpg',
+              altText: 'Security camera mounted on the corner of a brick commercial building',
               placeholderClass: 'photo-ph--brick'
             },
             sortOrder: 10
@@ -350,6 +359,8 @@ const pages = {
             metadata: {
               imagePlaceholder: 'install-glen-cove',
               imageSlot: 'home.recent_work.glen_cove',
+              publicPath: '/assets/images/install-glen-cove-eaves.jpg',
+              altText: 'Outdoor security camera installed under the eaves of a house',
               placeholderClass: 'photo-ph--garden'
             },
             sortOrder: 20
@@ -359,6 +370,8 @@ const pages = {
             metadata: {
               imagePlaceholder: 'install-jersey-city',
               imageSlot: 'home.recent_work.jersey_city',
+              publicPath: '/assets/images/install-jersey-city-intercom.jpg',
+              altText: 'Video intercom with keypad installed at a building entrance',
               placeholderClass: 'photo-ph--lobby'
             },
             sortOrder: 30
@@ -609,6 +622,8 @@ const pages = {
             metadata: {
               imagePlaceholder: 'case-brooklyn-retail',
               imageSlot: 'commercial.recent_jobs.brooklyn_retail',
+              publicPath: '/assets/images/case-retail-dome-camera.jpg',
+              altText: 'Dome security camera on a retail ceiling',
               placeholderClass: 'photo-ph--storefront',
               tag: 'Retail'
             },
@@ -620,6 +635,8 @@ const pages = {
             metadata: {
               imagePlaceholder: 'case-warehouse',
               imageSlot: 'commercial.recent_jobs.warehouse',
+              publicPath: '/assets/images/case-warehouse-aisle.jpg',
+              altText: 'Tall racking aisle inside a brightly lit fulfillment warehouse',
               placeholderClass: 'photo-ph--warehouse',
               tag: 'Logistics'
             },
@@ -631,6 +648,8 @@ const pages = {
             metadata: {
               imagePlaceholder: 'case-jersey-city',
               imageSlot: 'commercial.recent_jobs.jersey_city',
+              publicPath: '/assets/images/case-jersey-city-entry.jpg',
+              altText: 'Video intercom entry system at an apartment building',
               placeholderClass: 'photo-ph--lobby',
               tag: 'Multifamily'
             },
@@ -797,9 +816,10 @@ const pages = {
         settings: {
           imagePlaceholder: 'founder-photo',
           imageSlot: 'about.founder',
+          publicPath: '/assets/images/founder-at-work.jpg',
+          altText: "Installer's hands loading a bit into a cordless drill on a job",
           placeholderClass: 'photo-ph--interior',
           imageTag: 'Founder',
-          imageCaption: ['Placeholder - founder portrait', 'Swap in real photo']
         },
         sortOrder: 30
       }),

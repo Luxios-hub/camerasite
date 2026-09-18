@@ -103,6 +103,20 @@ function mediaAlt(itemOrPage, fallback = '') {
   ]) || fallback;
 }
 
+function mediaPosition(itemOrPage) {
+  if (!itemOrPage) {
+    return null;
+  }
+
+  const position = firstPublicPath([
+    itemOrPage.metadata && itemOrPage.metadata.imagePosition,
+    itemOrPage.settings && itemOrPage.settings.imagePosition
+  ]);
+
+  // CSS object-position: keywords, percentages, or lengths only.
+  return position && /^[a-z0-9.%\s-]+$/i.test(position) ? position.trim() : null;
+}
+
 function joinUrl(baseUrl, pathOrUrl) {
   if (!pathOrUrl) {
     return baseUrl;
@@ -245,11 +259,13 @@ function finalizeViewModel({ settings, page, content }) {
       items: itemHelper,
       mediaUrl,
       mediaAlt,
+      mediaPosition,
       ...renderHelpers
     },
     items: itemHelper,
     mediaUrl,
     mediaAlt,
+    mediaPosition,
     ...renderHelpers
   };
 }
@@ -258,5 +274,6 @@ module.exports = {
   buildPageViewModel,
   createSeedRepository,
   mediaAlt,
+  mediaPosition,
   mediaUrl
 };

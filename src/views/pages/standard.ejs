@@ -214,13 +214,10 @@
             <% const itemMeta = item.metadata || {}; %>
             <article class="case-card">
               <% const caseMedia = safeUrl(mediaUrl(item), null); %>
-              <% if (caseMedia) { %>
-                <img class="case-card__media" src="<%= caseMedia %>" alt="<%= mediaAlt(item, item.title) %>" />
-              <% } else { %>
-                <div class="case-card__media photo-ph <%= itemMeta.placeholderClass || 'photo-ph--storefront' %>" data-img-placeholder="<%= itemMeta.imagePlaceholder || itemMeta.imageSlot || item.itemKey %>">
-                  <% if (itemMeta.tag) { %><span class="photo-ph__tag"><%= itemMeta.tag %></span><% } %>
-                </div>
-              <% } %>
+              <div class="case-card__media photo-ph <%= itemMeta.placeholderClass || 'photo-ph--storefront' %>"<% if (!caseMedia) { %> data-img-placeholder="<%= itemMeta.imagePlaceholder || itemMeta.imageSlot || item.itemKey %>"<% } %>>
+                <% if (caseMedia) { %><%- include('../partials/public/slotImage', { src: caseMedia, owner: item, fallbackAlt: item.title }) %><% } %>
+                <% if (itemMeta.tag) { %><span class="photo-ph__tag"><%= itemMeta.tag %></span><% } %>
+              </div>
               <div class="case-card__body">
                 <% if (item.subtitle) { %><p class="case-card__kpi"><%= item.subtitle %></p><% } %>
                 <p class="case-card__title"><%= item.title %></p>
@@ -254,18 +251,15 @@
       <div class="container">
         <div class="contact-layout">
           <% const founderMedia = safeUrl(mediaUrl(block), null); %>
-          <% if (founderMedia) { %>
-            <img class="photo-ph" src="<%= founderMedia %>" alt="<%= mediaAlt(block, block.title) %>" style="aspect-ratio: 4/5; border-radius: var(--radius-lg); box-shadow: var(--shadow-card);" />
-          <% } else { %>
-            <div class="photo-ph <%= founderSettings.placeholderClass || 'photo-ph--interior' %>" data-img-placeholder="<%= founderSettings.imagePlaceholder || founderSettings.imageSlot || 'founder-photo' %>" style="aspect-ratio: 4/5; border-radius: var(--radius-lg); box-shadow: var(--shadow-card);">
-              <% if (founderSettings.imageTag) { %><span class="photo-ph__tag"><%= founderSettings.imageTag %></span><% } %>
-              <% if (founderSettings.imageCaption) { %>
-                <span class="photo-ph__caption">
-                  <% for (const caption of founderSettings.imageCaption) { %><span><%= caption %></span><% } %>
-                </span>
-              <% } %>
-            </div>
-          <% } %>
+          <div class="photo-ph <%= founderSettings.placeholderClass || 'photo-ph--interior' %>"<% if (!founderMedia) { %> data-img-placeholder="<%= founderSettings.imagePlaceholder || founderSettings.imageSlot || 'founder-photo' %>"<% } %> style="aspect-ratio: 4/5; border-radius: var(--radius-lg); box-shadow: var(--shadow-card);">
+            <% if (founderMedia) { %><%- include('../partials/public/slotImage', { src: founderMedia, owner: block, fallbackAlt: block.title }) %><% } %>
+            <% if (founderSettings.imageTag) { %><span class="photo-ph__tag"><%= founderSettings.imageTag %></span><% } %>
+            <% if (!founderMedia && founderSettings.imageCaption) { %>
+              <span class="photo-ph__caption">
+                <% for (const caption of founderSettings.imageCaption) { %><span><%= caption %></span><% } %>
+              </span>
+            <% } %>
+          </div>
           <div>
             <% if (block.eyebrow) { %><p class="eyebrow section-head__eyebrow"><%= block.eyebrow %></p><% } %>
             <h2 class="section-head__title text-balance" style="margin-bottom: var(--space-3);"><%= block.title %></h2>

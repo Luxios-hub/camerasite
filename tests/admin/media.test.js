@@ -561,6 +561,7 @@ test('selecting item media in admin renders the assigned image in public HTML', 
       metadata: JSON.stringify({
         imagePlaceholder: 'install-bay-ridge',
         imageSlot: 'home.recent_work.bay_ridge',
+        publicPath: '/assets/images/install-bay-ridge-brick.jpg',
         placeholderClass: 'photo-ph--brick'
       })
     })
@@ -574,12 +575,18 @@ test('selecting item media in admin renders the assigned image in public HTML', 
 
   assert.match(publicHome.text, /src="\/uploads\/media\/2026\/06\/door\.png"/);
   assert.match(publicHome.text, /alt="Installed camera above a storefront door"/);
+  assert.doesNotMatch(publicHome.text, /install-bay-ridge-brick\.jpg/, 'uploaded media replaces the seeded fallback');
   assert.doesNotMatch(publicHome.text, /data-img-placeholder="install-bay-ridge"/);
 });
 
 test('unassigned public media slots still render fallback placeholders', async () => {
   const mediaRepository = createFakeMediaRepository();
-  const contentRepository = createFakeContentRepository(cloneContent(), mediaRepository);
+  const content = cloneContent();
+  const bayRidge = content.pages.home.blocks
+    .find((block) => block.blockKey === 'recent_work').items
+    .find((item) => item.itemKey === 'bay-ridge-hardware');
+  delete bayRidge.metadata.publicPath;
+  const contentRepository = createFakeContentRepository(content, mediaRepository);
   const { app } = await createAdminMediaTestApp({ contentRepository, mediaRepository });
 
   const response = await request(app)

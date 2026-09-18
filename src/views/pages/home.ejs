@@ -34,17 +34,15 @@
         </div>
       </div>
       <% const heroMedia = safeUrl(mediaUrl(hero), null); %>
-      <% if (heroMedia) { %>
-        <img class="hero__visual" src="<%= heroMedia %>" alt="<%= mediaAlt(hero, hero.title) %>" />
-      <% } else { %>
-        <div class="hero__visual photo-ph <%= heroSettings.placeholderClass || 'photo-ph--dusk' %>" data-img-placeholder="<%= heroSettings.imagePlaceholder || heroSettings.imageSlot || 'hero' %>">
-          <% if (heroSettings.imageCaption) { %>
-            <span class="photo-ph__caption">
-              <% for (const caption of heroSettings.imageCaption) { %><span><%= caption %></span><% } %>
-            </span>
-          <% } %>
-        </div>
-      <% } %>
+      <div class="hero__visual photo-ph <%= heroSettings.placeholderClass || 'photo-ph--dusk' %>"<% if (!heroMedia) { %> data-img-placeholder="<%= heroSettings.imagePlaceholder || heroSettings.imageSlot || 'hero' %>"<% } %>>
+        <% if (heroMedia) { %>
+          <%- include('../partials/public/slotImage', { src: heroMedia, owner: hero, fallbackAlt: hero.title, eager: true }) %>
+        <% } else if (heroSettings.imageCaption) { %>
+          <span class="photo-ph__caption">
+            <% for (const caption of heroSettings.imageCaption) { %><span><%= caption %></span><% } %>
+          </span>
+        <% } %>
+      </div>
       <%- include('../partials/admin/visualEditControl', {
         label: 'Edit image',
         href: preview.blockEditUrl('hero'),
@@ -76,13 +74,10 @@
           <% if (visualMode) { %><div class="admin-visual-item-frame" data-admin-visual-item="<%= item.itemKey || item.id %>"><% } %>
           <a class="track-card" href="<%= safeUrl(item.linkUrl) %>">
             <% const itemMedia = safeUrl(mediaUrl(item), null); %>
-            <% if (itemMedia) { %>
-              <img class="track-card__media" src="<%= itemMedia %>" alt="<%= mediaAlt(item, item.title) %>" />
-            <% } else { %>
-              <div class="track-card__media photo-ph <%= itemMeta.placeholderClass || 'photo-ph--porch' %>" data-img-placeholder="<%= itemMeta.imagePlaceholder || itemMeta.imageSlot || item.itemKey %>">
-                <% if (itemMeta.audience) { %><span class="photo-ph__tag"><%= itemMeta.audience %></span><% } %>
-              </div>
-            <% } %>
+            <div class="track-card__media photo-ph <%= itemMeta.placeholderClass || 'photo-ph--porch' %>"<% if (!itemMedia) { %> data-img-placeholder="<%= itemMeta.imagePlaceholder || itemMeta.imageSlot || item.itemKey %>"<% } %>>
+              <% if (itemMedia) { %><%- include('../partials/public/slotImage', { src: itemMedia, owner: item, fallbackAlt: item.title }) %><% } %>
+              <% if (itemMeta.audience) { %><span class="photo-ph__tag"><%= itemMeta.audience %></span><% } %>
+            </div>
             <h3 class="track-card__title"><%= item.title %></h3>
             <% if (itemMeta.bullets) { %>
               <ul class="track-card__bullets">
@@ -153,18 +148,15 @@
     <div class="container">
       <div class="two-track">
         <% const whyMedia = safeUrl(mediaUrl(whyLocal), null); %>
-        <% if (whyMedia) { %>
-          <img class="photo-ph" src="<%= whyMedia %>" alt="<%= mediaAlt(whyLocal, whyLocal.title) %>" style="aspect-ratio: 4/5; border-radius: var(--radius-lg);" />
-        <% } else { %>
-          <div class="photo-ph <%= whySettings.placeholderClass || 'photo-ph--interior' %>" data-img-placeholder="<%= whySettings.imagePlaceholder || whySettings.imageSlot || 'local-installer-photo' %>" style="aspect-ratio: 4/5; border-radius: var(--radius-lg);">
-            <% if (whySettings.imageTag) { %><span class="photo-ph__tag"><%= whySettings.imageTag %></span><% } %>
-            <% if (whySettings.imageCaption) { %>
-              <span class="photo-ph__caption">
-                <% for (const caption of whySettings.imageCaption) { %><span><%= caption %></span><% } %>
-              </span>
-            <% } %>
-          </div>
-        <% } %>
+        <div class="photo-ph <%= whySettings.placeholderClass || 'photo-ph--interior' %>"<% if (!whyMedia) { %> data-img-placeholder="<%= whySettings.imagePlaceholder || whySettings.imageSlot || 'local-installer-photo' %>"<% } %> style="aspect-ratio: 4/5; border-radius: var(--radius-lg);">
+          <% if (whyMedia) { %><%- include('../partials/public/slotImage', { src: whyMedia, owner: whyLocal, fallbackAlt: whyLocal.title }) %><% } %>
+          <% if (whySettings.imageTag) { %><span class="photo-ph__tag"><%= whySettings.imageTag %></span><% } %>
+          <% if (!whyMedia && whySettings.imageCaption) { %>
+            <span class="photo-ph__caption">
+              <% for (const caption of whySettings.imageCaption) { %><span><%= caption %></span><% } %>
+            </span>
+          <% } %>
+        </div>
         <%- include('../partials/admin/visualEditControl', {
           label: 'Edit image',
           href: preview.blockEditUrl('why_local'),
@@ -276,11 +268,9 @@
           <% if (visualMode) { %><div class="admin-visual-item-frame" data-admin-visual-item="<%= item.itemKey || item.id %>"><% } %>
           <article class="install-card">
             <% const recentMedia = safeUrl(mediaUrl(item), null); %>
-            <% if (recentMedia) { %>
-              <img class="install-card__media" src="<%= recentMedia %>" alt="<%= mediaAlt(item, item.title) %>" />
-            <% } else { %>
-              <div class="install-card__media photo-ph <%= itemMeta.placeholderClass || 'photo-ph--brick' %>" data-img-placeholder="<%= itemMeta.imagePlaceholder || itemMeta.imageSlot || item.itemKey %>"></div>
-            <% } %>
+            <div class="install-card__media photo-ph <%= itemMeta.placeholderClass || 'photo-ph--brick' %>"<% if (!recentMedia) { %> data-img-placeholder="<%= itemMeta.imagePlaceholder || itemMeta.imageSlot || item.itemKey %>"<% } %>>
+              <% if (recentMedia) { %><%- include('../partials/public/slotImage', { src: recentMedia, owner: item, fallbackAlt: item.title }) %><% } %>
+            </div>
             <div class="install-card__body">
               <h4 class="install-card__title"><%= item.title %></h4>
               <% if (item.subtitle) { %><p class="install-card__meta"><%= item.subtitle %></p><% } %>

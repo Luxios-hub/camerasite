@@ -85,6 +85,15 @@ test('buildPageViewModel groups enabled content and exposes helper functions', a
   assert.equal(viewModel.mediaUrl({ media: { publicPath: '/uploads/door.jpg' } }), '/uploads/door.jpg');
   assert.equal(viewModel.mediaUrl({ publicPath: '/uploads/page-og.jpg' }), '/uploads/page-og.jpg');
   assert.equal(viewModel.mediaUrl({ metadata: { imagePlaceholder: 'fallback-only' } }), null);
+  assert.equal(viewModel.mediaUrl({ metadata: { publicPath: '/assets/images/seeded.jpg' } }), '/assets/images/seeded.jpg');
+  assert.equal(
+    viewModel.mediaUrl({ media: { publicPath: '/uploads/door.jpg' }, metadata: { publicPath: '/assets/images/seeded.jpg' } }),
+    '/uploads/door.jpg',
+    'admin-assigned media wins over the seeded fallback path'
+  );
+  assert.equal(viewModel.mediaPosition({ settings: { imagePosition: '30% center' } }), '30% center');
+  assert.equal(viewModel.mediaPosition({ metadata: { imagePosition: 'url(javascript:alert(1))' } }), null);
+  assert.equal(viewModel.mediaPosition({}), null);
 });
 
 const pageCases = [
@@ -124,7 +133,7 @@ test('GET /residential renders the clean residential alias', async () => {
   assert.match(response.text, /<link rel="canonical" href="https:\/\/camerasnyc\.com\/residential\.html"/);
 });
 
-test('public pages render SEO tags, JSON-LD, and placeholder media fallbacks', async () => {
+test('public pages render SEO tags and JSON-LD', async () => {
   const app = createTestApp();
 
   const response = await request(app)
@@ -135,8 +144,47 @@ test('public pages render SEO tags, JSON-LD, and placeholder media fallbacks', a
   assert.match(response.text, /<meta property="og:title" content="Security Camera Installation in NYC, Long Island &amp; NJ \| CamerasNYC"/);
   assert.match(response.text, /<script type="application\/ld\+json"(?: nonce="[^"]+")?>/);
   assert.match(response.text, /"@type": "LocalBusiness"/);
-  assert.match(response.text, /class="hero__visual photo-ph photo-ph--dusk"/);
-  assert.match(response.text, /data-img-placeholder="hero-front-porch-doorbell"/);
+});
+
+test('seeded photos render inside the photo-ph wrapper on every image slot', async () => {
+  const app = createTestApp();
+
+  const home = await request(app).get('/').expect(200);
+
+  // hero: eager-loaded, wrapper keeps its layout class, no placeholder attribute
+  assert.match(home.text, /<div class="hero__visual photo-ph photo-ph--dusk">\s*<img src="\/assets\/images\/hero-front-porch-dusk\.jpg" alt="Warm front entrance of a brick home glowing at dusk" fetchpriority="high" \/>/);
+  assert.doesNotMatch(home.text, /data-img-placeholder="hero-front-porch-doorbell"/);
+  // track card: photo sits under the audience badge
+  assert.match(home.text, /<div class="track-card__media photo-ph photo-ph--porch">\s*<img src="\/assets\/images\/residential-camera\.jpg"[^>]*loading="lazy" \/>\s*<span class="photo-ph__tag">For homeowners<\/span>/);
+  assert.match(home.text, /<img src="\/assets\/images\/commercial-camera\.jpg"/);
+  // why-local: optional crop offset comes through as object-position
+  assert.match(home.text, /<img src="\/assets\/images\/installer-mounting-camera\.jpg"[^>]*style="object-position: 30% center;" \/>\s*<span class="photo-ph__tag">Local crew<\/span>/);
+  // recent installs
+  assert.match(home.text, /<div class="install-card__media photo-ph photo-ph--brick">\s*<img src="\/assets\/images\/install-bay-ridge-brick\.jpg"/);
+  assert.doesNotMatch(home.text, /data-img-placeholder=/);
+
+  const commercial = await request(app).get('/commercial.html').expect(200);
+  assert.match(commercial.text, /<div class="case-card__media photo-ph photo-ph--storefront">\s*<img src="\/assets\/images\/case-retail-dome-camera\.jpg"[^>]*\/>\s*<span class="photo-ph__tag">Retail<\/span>/);
+
+  const about = await request(app).get('/about.html').expect(200);
+  assert.match(about.text, /<img src="\/assets\/images\/founder-at-work\.jpg"[^>]*\/>\s*<span class="photo-ph__tag">Founder<\/span>/);
+});
+
+test('image slots without media fall back to the placeholder treatment', async () => {
+  const content = cloneContent();
+  const hero = getBlock(content, 'home', 'hero');
+  delete hero.settings.publicPath;
+  hero.settings.imageCaption = ['Placeholder - front door at dusk', 'Swap in real photo'];
+  const app = createPublicTestApp({ content });
+
+  const response = await request(app)
+    .get('/')
+    .expect(200)
+    .expect('content-type', /html/);
+
+  assert.match(response.text, /class="hero__visual photo-ph photo-ph--dusk" data-img-placeholder="hero-front-porch-doorbell"/);
+  assert.match(response.text, /<span class="photo-ph__caption">/);
+  assert.doesNotMatch(response.text, /hero-front-porch-dusk\.jpg/);
 });
 
 test('contact form attributes cannot inject raw attributes or scripts from CMS fields', async () => {

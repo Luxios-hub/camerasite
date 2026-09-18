@@ -1,0 +1,5 @@
+<%# One photo inside a .photo-ph wrapper (the wrapper's CSS gives it object-fit: cover).
+    Locals: src (already passed through safeUrl), owner (block or item, for alt + position),
+    fallbackAlt, and optional eager for above-the-fold slots. %>
+<% const slotPosition = mediaPosition(owner); %>
+<img src="<%= src %>" alt="<%= mediaAlt(owner, fallbackAlt) %>"<% if (locals.eager) { %> fetchpriority="high"<% } else { %> loading="lazy"<% } %><% if (slotPosition) { %> style="object-position: <%= slotPosition %>;"<% } %> />
